@@ -12,16 +12,16 @@ SET(_target
 )
 
 SET(_version
-    "7.7.0"
+    "7.8.4"
 )
 
 # Download a recent version that includes the feature we need (--disable-gpl) which hasn't been released nor tagged yet.
 SET(_download_url
-    "https://github.com/ivmai/libatomic_ops/archive/044573903530c4a8e8318e20a830d4a0531b2035.zip"
+    "https://github.com/ivmai/libatomic_ops/archive/refs/tags/v${_version}.zip"
 )
 
 SET(_download_hash
-    cc7fad1e71b3064abe1ea821ae9a9a6e
+    "f1e4354961907e6aff40470b3cba3a42"
 )
 
 SET(_install_dir
