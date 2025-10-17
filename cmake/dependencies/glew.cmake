@@ -7,14 +7,14 @@
 INCLUDE(ProcessorCount) # require CMake 3.15+
 PROCESSORCOUNT(_cpu_count)
 
-RV_CREATE_STANDARD_DEPS_VARIABLES("RV_DEPS_GLEW" "e1a80a9f12d7def202d394f46e44cfced1104bfb" "make" "")
+RV_CREATE_STANDARD_DEPS_VARIABLES("RV_DEPS_GLEW" "196b58d4414d3f10248e1ae2b106729c52a69d0e" "make" "")
 
 SET(_download_url
     "https://github.com/nigels-com/glew/archive/${_version}.zip"
 )
 
 SET(_download_hash
-    9bfc689dabeb4e305ce80b5b6f28bcf9
+    "22373ce83f52c379ada14f9c1d9ed0c6"
 )
 
 SET(_install_dir

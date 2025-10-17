@@ -6,14 +6,14 @@
 
 #
 # LibRaw official Web page: https://www.libraw.org/about
-# LibRaw official sources:  https://www.libraw.org/data/LibRaw-0.21.1.tar.gz
+# LibRaw official sources:  https://www.libraw.org/data/LibRaw-0.21.4.tar.gz
 # LibRaw build from sources: https://www.libraw.org/docs/Install-LibRaw-eng.html
 #
 
 INCLUDE(ProcessorCount) # require CMake 3.15+
 PROCESSORCOUNT(_cpu_count)
 
-RV_CREATE_STANDARD_DEPS_VARIABLES("RV_DEPS_RAW" "0.21.1" "make" "../src/configure")
+RV_CREATE_STANDARD_DEPS_VARIABLES("RV_DEPS_RAW" "0.21.4" "make" "../src/configure")
 IF(RV_TARGET_LINUX)
   # Overriding _lib_dir created in 'RV_CREATE_STANDARD_DEPS_VARIABLES' since this CMake-based project isn't using lib64
   SET(_lib_dir
@@ -27,7 +27,7 @@ SET(_download_url
 )
 
 SET(_download_hash
-    "3ad334296a7a2c8ee841f353cc1b450b"
+    "6fe652abb6c0ae3b322c561e5c459f44"
 )
 
 SET(_libraw_lib_version

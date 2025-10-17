@@ -13,7 +13,7 @@ PROCESSORCOUNT(_cpu_count)
 RV_VFX_SET_VARIABLE(
   _ext_dep_version
   CY2023 "2.2.1"
-  CY2024 "2.3.2"
+  CY2024 "2.5.0"
 )
 
 RV_CREATE_STANDARD_DEPS_VARIABLES("RV_DEPS_OCIO" "${_ext_dep_version}" "make" "")
@@ -39,7 +39,7 @@ ENDIF()
 RV_VFX_SET_VARIABLE(
   _download_hash
   CY2023 "372d6982cf01818a21a12f9628701a91"
-  CY2024 "8af74fcb8c4820ab21204463a06ba490"
+  CY2024 "41d6b62ac672ed333ebfdcc1108407e0"
 )
 
 SET(_download_url
@@ -58,7 +58,7 @@ IF(RV_TARGET_WINDOWS)
   RV_VFX_SET_VARIABLE(
     _ocio_win_sharedlibname
     CY2023 "OpenColorIO_2_2.dll"
-    CY2024 "OpenColorIO_2_3.dll"
+    CY2024 "OpenColorIO_2_5.dll"
   )
 
   SET(_ocio_win_sharedlib_path

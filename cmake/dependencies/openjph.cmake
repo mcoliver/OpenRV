@@ -13,7 +13,7 @@ INCLUDE(ProcessorCount) # require CMake 3.15+
 PROCESSORCOUNT(_cpu_count)
 
 # version 2+ requires changes to IOjp2 project
-RV_CREATE_STANDARD_DEPS_VARIABLES("RV_DEPS_OPENJPH" "0.21.3" "make" "")
+RV_CREATE_STANDARD_DEPS_VARIABLES("RV_DEPS_OPENJPH" "0.24.2" "make" "")
 IF(RV_TARGET_LINUX)
   # Overriding _lib_dir created in 'RV_CREATE_STANDARD_DEPS_VARIABLES' since this CMake-based project isn't using lib64
   SET(_lib_dir
@@ -26,19 +26,19 @@ SET(_download_url
     "https://github.com/aous72/OpenJPH/archive/refs/tags/${_version}.tar.gz"
 )
 SET(_download_hash
-    "d0a3fb5f643a8948d5874624ff94a229"
+    "46144f9c63d65e195e952ca0394f4f66"
 )
 
 IF(RV_TARGET_WINDOWS)
-  RV_MAKE_STANDARD_LIB_NAME("openjph.0.21" "0.21.3" "SHARED" "")
+  RV_MAKE_STANDARD_LIB_NAME("openjph.0.24" "0.24.2" "SHARED" "")
   SET(_libname
-        "openjph.0.21.lib"
+        "openjph.0.24.lib"
     )
     SET(_implibpath
         ${_lib_dir}/${_libname}
     )
 ELSE()
-  RV_MAKE_STANDARD_LIB_NAME("openjph" "0.21.3" "SHARED" "")
+  RV_MAKE_STANDARD_LIB_NAME("openjph" "0.24.2" "SHARED" "")
 ENDIF()
  MESSAGE("****OPENJPH RV_MAKE_STANDARD_LIB_NAME IMPLIB _implibpath:${_implibpath} _implibname:${_implibname} _libname:${_libname} _libpath:${_libpath}")
 

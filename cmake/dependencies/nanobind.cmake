@@ -7,7 +7,7 @@
 INCLUDE(ProcessorCount) # require CMake 3.15+
 PROCESSORCOUNT(_cpu_count)
 
-RV_CREATE_STANDARD_DEPS_VARIABLES("RV_DEPS_NANOBIND" "2.7.0" "" "")
+RV_CREATE_STANDARD_DEPS_VARIABLES("RV_DEPS_NANOBIND" "2.9.2" "" "")
 RV_SHOW_STANDARD_DEPS_VARIABLES()
 
 SET(_download_url
@@ -15,7 +15,7 @@ SET(_download_url
 )
 
 SET(_git_commit
-    "44ad9a9e5729abda24ef8dc9d76233d801e651e9"
+    "116e098cfa96effca2a54e32e0ce5b93abe25393"
 )
 
 SET(_patch_command_nanobind_windows_debug
