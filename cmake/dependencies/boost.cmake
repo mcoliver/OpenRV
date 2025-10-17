@@ -38,13 +38,13 @@ ENDIF()
 
 # Set some variables for VFX2024 since those value are used at two locations.
 SET(_BOOST_VFX2024_VERSION_
-    "1.82.0"
+    "1.89.0"
 )
 SET(_BOOST_VFX2024_MAJOR_MINOR_VERSION_
-    "1_82"
+    "1_89"
 )
 SET(_BOOST_VFX2024_DOWNLOAD_HASH_
-    "f7050f554a65f6a42ece221eaeec1660"
+    "187b577ce9f485314fcf17bcba2fb542"
 )
 
 IF(NOT _BOOST_DETECTED_XCODE_15_)

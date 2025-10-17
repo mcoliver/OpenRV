@@ -36,7 +36,7 @@ TARGET_COMPILE_OPTIONS(
 
 TARGET_LINK_LIBRARIES(
   ${_target}
-  PRIVATE Python::Python Boost::filesystem Boost::system Qt::Core Qt::Gui Qt::Widgets
+  PRIVATE Python::Python Boost::filesystem Qt::Core Qt::Gui Qt::Widgets
 )
 
 IF(RV_TARGET_DARWIN)
