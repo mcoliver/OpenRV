@@ -78,10 +78,15 @@ SET(RV_DEPS_QT6_VERSION
     CACHE STRING "Qt Version String"
 )
 
+IF(RV_TARGET_DARWIN)
+  FIND_PROGRAM(QT_MACDEPLOYQT_EXECUTABLE macdeployqt HINTS "${RV_DEPS_QT6_LOCATION}/bin")
+  IF(NOT QT_MACDEPLOYQT_EXECUTABLE)
+    MESSAGE(FATAL_ERROR "macdeployqt not found in ${RV_DEPS_QT6_LOCATION}/bin")
+  ENDIF()
+ENDIF()
+
 # Common to both Mac and Linux platforms
-IF(RV_TARGET_DARWIN
-   OR RV_TARGET_LINUX
-)
+IF(RV_TARGET_LINUX)
   FILE(
     GLOB _qt_plugins_dirs
     RELATIVE ${RV_DEPS_QT6_LOCATION}/plugins
@@ -99,6 +104,7 @@ IF(RV_TARGET_DARWIN
 ENDIF()
 
 # Mac
+<<<<<<< Updated upstream
 IF(RV_TARGET_DARWIN)
   SET(_qt5_lib_dir
       ${RV_DEPS_QT6_LOCATION}/lib
@@ -120,6 +126,31 @@ IF(RV_TARGET_DARWIN)
     ENDIF()
   ENDFOREACH()
 ENDIF()
+||||||| Stash base
+IF(RV_TARGET_DARWIN)
+  SET(_qt5_lib_dir
+      ${RV_DEPS_QT6_LOCATION}/lib
+  )
+  FILE(
+    GLOB libs_to_copy
+    RELATIVE ${_qt5_lib_dir}
+    ${_qt5_lib_dir}/*
+  )
+  FOREACH(
+    lib_to_copy
+    ${libs_to_copy}
+  )
+    IF(lib_to_copy MATCHES "framework" AND NOT (CMAKE_BUILD_TYPE STREQUAL "Release" AND lib_to_copy MATCHES "\\.dSYM$"))
+      FILE(
+        COPY ${_qt5_lib_dir}/${lib_to_copy}
+        DESTINATION ${RV_STAGE_FRAMEWORKS_DIR}
+      )
+    ENDIF()
+  ENDFOREACH()
+ENDIF()
+=======
+# macdeployqt will be used as a post-build step to copy the frameworks
+>>>>>>> Stashed changes
 
 # Linux
 IF(RV_TARGET_LINUX)

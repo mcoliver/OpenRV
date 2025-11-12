@@ -37,8 +37,11 @@ SET(RV_PACKAGES_DIR
 FILE(MAKE_DIRECTORY ${RV_PACKAGES_DIR})
 
 IF(RV_TARGET_DARWIN)
+  SET(RV_STAGE_APP_BUNDLE_DIR
+      ${RV_APP_ROOT}/RV.app
+  )
   SET(RV_STAGE_ROOT_DIR
-      ${RV_APP_ROOT}/RV.app/Contents
+      ${RV_STAGE_APP_BUNDLE_DIR}/Contents
       CACHE STRING "RV's build install root directory."
   )
   SET(RV_STAGE_BIN_DIR
