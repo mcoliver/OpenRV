@@ -46,6 +46,8 @@ namespace IPCore
     {
         OCIO::ConstConfigRcPtr config;
         OCIO::ContextRcPtr context;
+        OCIO::ConstProcessorRcPtr processor;
+        OCIO::ConstGPUProcessorRcPtr gpuProcessor;
         string display;
         string view;
         string linear;
@@ -526,6 +528,20 @@ namespace IPCore
             // Fills the shaderDesc from the proc.
             gpuProcessor->extractGpuShaderInfo(shaderDesc);
 
+            // Keep the processor alive for the Uniform callbacks
+            m_state->processor = processor;
+            m_state->gpuProcessor = gpuProcessor;
+
+            // Update Uniforms (callbacks need to be refreshed even if shader cache ID is same)
+            m_uniforms.clear();
+            const unsigned int numUniforms = shaderDesc->getNumUniforms();
+            for (unsigned idx = 0; idx < numUniforms; ++idx)
+            {
+                OCIO::GpuShaderDesc::UniformData data;
+                const char* name = shaderDesc->getUniform(idx, data);
+                m_uniforms.push_back({name, data});
+            }
+
             string shaderCacheID = gpuProcessor->getCacheID();
 
             if (m_state->shaderID != shaderCacheID)
@@ -536,6 +552,23 @@ namespace IPCore
                 }
 
                 string glsl(shaderDesc->getShaderText());
+
+                // Add uniforms to the shader function parameters
+                // Note: We add them before LUTs so they appear later in the argument list
+                // (shaderAddLutAsParameter appends to the beginning of the argument list)
+                for (unsigned idx = 0; idx < m_uniforms.size(); ++idx)
+                {
+                    const OCIOUniform& u = m_uniforms[idx];
+                    string type;
+                    if (u.data.m_type == OCIO::GpuShaderDesc::UNIFORM_DOUBLE) type = "float";
+                    else if (u.data.m_type == OCIO::GpuShaderDesc::UNIFORM_BOOL) type = "bool";
+                    else if (u.data.m_type == OCIO::GpuShaderDesc::UNIFORM_FLOAT3) type = "vec3";
+
+                    if (!type.empty())
+                    {
+                        shaderAddLutAsParameter(glsl, u.name, type);
+                    }
+                }
 
                 m_1DLUTs.clear();
                 const unsigned int numTextures = shaderDesc->getNumTextures();
@@ -560,7 +593,7 @@ namespace IPCore
                 }
 
                 m_state->function =
-                    new Shader::Function(shaderDesc->getFunctionName(), glsl, Shader::Function::Color, numTextures + num3DTextures);
+                    new Shader::Function(shaderDesc->getFunctionName(), glsl, Shader::Function::Color, numTextures + num3DTextures + m_uniforms.size());
                 m_state->shaderID = shaderCacheID;
 
                 if (Shader::debuggingType() != Shader::NoDebugInfo)
@@ -658,6 +691,28 @@ namespace IPCore
             {
                 args[idx + m_3DLUTs.size() + 1] = new Shader::BoundSampler(
                     F->parameters()[idx + m_3DLUTs.size() + 1], Shader::ImageOrFB(m_1DLUTs[m_1DLUTs.size() - 1 - idx]->lutfb(), 0));
+            }
+
+            // Add the Uniforms expressions (if any)
+            size_t uniformBaseIdx = m_3DLUTs.size() + m_1DLUTs.size() + 1;
+            for (unsigned idx = 0; idx < m_uniforms.size(); ++idx)
+            {
+                const OCIOUniform& u = m_uniforms[m_uniforms.size() - 1 - idx];
+                const Symbol* s = F->parameters()[uniformBaseIdx + idx];
+
+                if (u.data.m_type == OCIO::GpuShaderDesc::UNIFORM_DOUBLE)
+                {
+                    args[uniformBaseIdx + idx] = new Shader::BoundFloat(s, float(u.data.m_getDouble()));
+                }
+                else if (u.data.m_type == OCIO::GpuShaderDesc::UNIFORM_BOOL)
+                {
+                    args[uniformBaseIdx + idx] = new Shader::BoundBool(s, u.data.m_getBool() ? 1 : 0);
+                }
+                else if (u.data.m_type == OCIO::GpuShaderDesc::UNIFORM_FLOAT3)
+                {
+                    const auto& v = u.data.m_getFloat3();
+                    args[uniformBaseIdx + idx] = new Shader::BoundVec3f(s, Vec3f(float(v[0]), float(v[1]), float(v[2])));
+                }
             }
 
             expr = new Shader::Expression(F, args, image);

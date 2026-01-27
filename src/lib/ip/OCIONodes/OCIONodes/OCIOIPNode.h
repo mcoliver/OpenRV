@@ -64,12 +64,19 @@ namespace IPCore
         OCIO::MatrixTransformRcPtr getMatrixTransformXYZToRec709();
         OCIO::MatrixTransformRcPtr getMatrixTransformRec709ToXYZ();
 
+        struct OCIOUniform
+        {
+            std::string name;
+            OCIO::GpuShaderDesc::UniformData data;
+        };
+
     private:
         IntProperty* m_activeProperty{nullptr};
         StringProperty* m_configDescription{nullptr};
         StringProperty* m_configWorkingDir{nullptr};
         std::vector<OCIO1DLUTPtr> m_1DLUTs;
         std::vector<OCIO3DLUTPtr> m_3DLUTs;
+        std::vector<OCIOUniform> m_uniforms;
         OCIOState* m_state{nullptr};
         bool m_useRawConfig{false};
 
