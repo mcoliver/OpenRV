@@ -40,16 +40,14 @@
 #define DARWIN_THREAD_STATE PPC_THREAD_STATE
 #endif
 
-#if defined(ARCH_IA32) || defined(ARCH_IA32_64)
-#define darwin_thread_state i386_thread_state
-#define DARWIN_THREAD_STATE_COUNT i386_THREAD_STATE_COUNT
-#define DARWIN_THREAD_STATE i386_THREAD_STATE
-#endif
-
 #if defined(RV_ARCH_ARM64)
 #define darwin_thread_state arm_thread_state64_t
 #define DARWIN_THREAD_STATE_COUNT ARM_THREAD_STATE64_COUNT
 #define DARWIN_THREAD_STATE ARM_THREAD_STATE64
+#elif defined(ARCH_IA32) || defined(ARCH_IA32_64)
+#define darwin_thread_state i386_thread_state
+#define DARWIN_THREAD_STATE_COUNT i386_THREAD_STATE_COUNT
+#define DARWIN_THREAD_STATE i386_THREAD_STATE
 #endif
 
 #endif
