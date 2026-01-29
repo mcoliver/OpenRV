@@ -293,7 +293,7 @@ namespace Mu
 #ifdef _MSC_VER
         typedef STLString<wchar_t>::Type UTF16String;
 #else
-        typedef STLString<unsigned short>::Type UTF16String;
+        typedef STLString<char16_t>::Type UTF16String;
 #endif
 
 #ifdef _MSC_VER
