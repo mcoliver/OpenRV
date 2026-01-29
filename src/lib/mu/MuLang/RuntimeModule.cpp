@@ -408,11 +408,11 @@ namespace Mu
 
     NODE_IMPLEMENTATION(RuntimeModule::gc_perform_collection, void) { GC_gcollect(); }
 
-    NODE_IMPLEMENTATION(RuntimeModule::gc_parallel_enabled, bool) { NODE_RETURN(GC_parallel ? true : false); }
+    NODE_IMPLEMENTATION(RuntimeModule::gc_parallel_enabled, bool) { NODE_RETURN(GC_get_parallel() ? true : false); }
 
-    NODE_IMPLEMENTATION(RuntimeModule::gc_all_interior_pointers, bool) { NODE_RETURN(GC_all_interior_pointers ? true : false); }
+    NODE_IMPLEMENTATION(RuntimeModule::gc_all_interior_pointers, bool) { NODE_RETURN(GC_get_all_interior_pointers() ? true : false); }
 
-    NODE_IMPLEMENTATION(RuntimeModule::gc_num_collections, int) { NODE_RETURN(GC_gc_no); }
+    NODE_IMPLEMENTATION(RuntimeModule::gc_num_collections, int) { NODE_RETURN(GC_get_gc_no()); }
 
     NODE_IMPLEMENTATION(RuntimeModule::gc_push_api, void)
     {
