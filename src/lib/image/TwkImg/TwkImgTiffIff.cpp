@@ -14,6 +14,7 @@
 #include <TwkMath/Function.h>
 
 #include <math.h>
+#include <cstdint>
 #include <sys/types.h>
 #include <time.h>
 #include <string.h>
@@ -73,9 +74,9 @@ namespace TwkImg
 
         int width;
         int height;
-        uint16 bitsPerSample;
-        uint16* sampleinfo;
-        uint16 extrasamples;
+        uint16_t bitsPerSample;
+        uint16_t* sampleinfo;
+        uint16_t extrasamples;
 
         TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
         TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
@@ -208,9 +209,9 @@ namespace TwkImg
 
         int width;
         int height;
-        uint16 bitsPerSample;
-        uint16* sampleinfo;
-        uint16 extrasamples;
+        uint16_t bitsPerSample;
+        uint16_t* sampleinfo;
+        uint16_t extrasamples;
 
         TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
         TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
@@ -353,11 +354,11 @@ namespace TwkImg
 
         if (Mcamera != NULL)
         {
-            TIFFSetField(tif, TIFFTAG_CAMERA_MATRIX, (uint16)16, (const float*)Mcamera);
+            TIFFSetField(tif, TIFFTAG_CAMERA_MATRIX, (uint16_t)16, (const float*)Mcamera);
         }
         if (Mscreen != NULL)
         {
-            TIFFSetField(tif, TIFFTAG_SCREEN_MATRIX, (uint16)16, (const float*)Mscreen);
+            TIFFSetField(tif, TIFFTAG_SCREEN_MATRIX, (uint16_t)16, (const float*)Mscreen);
         }
 
         char hostname[64];
@@ -378,8 +379,8 @@ namespace TwkImg
         default:
             break;
         }
-        uint16 extrasamples = 1;
-        uint16 sampleinfo[1] = {EXTRASAMPLE_ASSOCALPHA};
+        uint16_t extrasamples = 1;
+        uint16_t sampleinfo[1] = {EXTRASAMPLE_ASSOCALPHA};
         TIFFSetField(tif, TIFFTAG_EXTRASAMPLES, extrasamples, sampleinfo);
 
         tdata_t buf = _TIFFmalloc(TIFFScanlineSize(tif));
@@ -469,19 +470,19 @@ namespace TwkImg
 
         if (Mcamera != NULL)
         {
-            TIFFSetField(tif, TIFFTAG_CAMERA_MATRIX, (uint16)16, (const float*)Mcamera);
+            TIFFSetField(tif, TIFFTAG_CAMERA_MATRIX, (uint16_t)16, (const float*)Mcamera);
         }
         if (Mscreen != NULL)
         {
-            TIFFSetField(tif, TIFFTAG_SCREEN_MATRIX, (uint16)16, (const float*)Mscreen);
+            TIFFSetField(tif, TIFFTAG_SCREEN_MATRIX, (uint16_t)16, (const float*)Mscreen);
         }
 
         char hostname[64];
         gethostname(hostname, 64);
         TIFFSetField(tif, TIFFTAG_HOSTCOMPUTER, hostname);
 
-        uint16 extrasamples = 1;
-        uint16 sampleinfo[1] = {EXTRASAMPLE_ASSOCALPHA};
+        uint16_t extrasamples = 1;
+        uint16_t sampleinfo[1] = {EXTRASAMPLE_ASSOCALPHA};
         TIFFSetField(tif, TIFFTAG_EXTRASAMPLES, extrasamples, sampleinfo);
 
         tdata_t buf = _TIFFmalloc(TIFFScanlineSize(tif));
@@ -526,19 +527,19 @@ namespace TwkImg
 
         if (Mcamera != NULL)
         {
-            TIFFSetField(tif, TIFFTAG_CAMERA_MATRIX, (uint16)16, (const float*)Mcamera);
+            TIFFSetField(tif, TIFFTAG_CAMERA_MATRIX, (uint16_t)16, (const float*)Mcamera);
         }
         if (Mscreen != NULL)
         {
-            TIFFSetField(tif, TIFFTAG_SCREEN_MATRIX, (uint16)16, (const float*)Mscreen);
+            TIFFSetField(tif, TIFFTAG_SCREEN_MATRIX, (uint16_t)16, (const float*)Mscreen);
         }
 
         char hostname[64];
         gethostname(hostname, 64);
         TIFFSetField(tif, TIFFTAG_HOSTCOMPUTER, hostname);
 
-        uint16 extrasamples = 1;
-        uint16 sampleinfo[1] = {EXTRASAMPLE_ASSOCALPHA};
+        uint16_t extrasamples = 1;
+        uint16_t sampleinfo[1] = {EXTRASAMPLE_ASSOCALPHA};
         TIFFSetField(tif, TIFFTAG_EXTRASAMPLES, extrasamples, sampleinfo);
 
         tdata_t buf = _TIFFmalloc(TIFFScanlineSize(tif));

@@ -21,6 +21,7 @@
 #include <MuLang/ExceptionType.h>
 #include <MuLang/MuLangContext.h>
 #include <MuLang/StringType.h>
+#include <cstdint>
 #include <ctype.h>
 #include <iostream>
 #include <sstream>
@@ -82,9 +83,9 @@ namespace Mu
             throw ProgramException(e);
         }
 
-        uint16* sampleinfo;
-        uint16 extrasamples;
-        uint16 bps;
+        uint16_t* sampleinfo;
+        uint16_t extrasamples;
+        uint16_t bps;
 
         int width, height;
 

@@ -5,6 +5,7 @@
 //
 //******************************************************************************
 #include <IOtiff/IOtiff.h>
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <stl_ext/string_algo.h>
@@ -254,7 +255,7 @@ namespace TwkFB
         //  crashing
         //
 
-        uint32 Len;
+        uint32_t Len;
         void* Buffer;
         bool set_profile = false;
 
@@ -274,7 +275,7 @@ namespace TwkFB
         //  Read EXIF tags if present
         //
 
-        uint32 exif_offset = 0;
+        uint32_t exif_offset = 0;
 
         if (TIFFGetField(tif, TIFFTAG_EXIFIFD, &exif_offset))
         {
@@ -969,7 +970,7 @@ namespace TwkFB
 
         if (unsigned char* buf = (unsigned char*)_TIFFmalloc(TIFFTileSize(tif)))
         {
-            uint32 tw, th, w, h;
+            uint32_t tw, th, w, h;
 
             TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
             TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h);
@@ -984,11 +985,11 @@ namespace TwkFB
             // These checks are to handle the case where the
             // tile is larger than the image size.
             //
-            uint32 copy_rowsize = ((w < tw) ? (w * rowsize / tw) : rowsize);
+            uint32_t copy_rowsize = ((w < tw) ? (w * rowsize / tw) : rowsize);
 
-            for (uint32 row = 0; row < h; row += th)
+            for (uint32_t row = 0; row < h; row += th)
             {
-                for (uint32 col = 0; col < w; col += tw)
+                for (uint32_t col = 0; col < w; col += tw)
                 {
                     if (TIFFReadTile(tif, buf, col, row, 0, 0) < 0)
                     {
@@ -1045,7 +1046,7 @@ namespace TwkFB
 
         if (unsigned char* buf = (unsigned char*)_TIFFmalloc(TIFFTileSize(tif)))
         {
-            uint32 tw, th, w, h;
+            uint32_t tw, th, w, h;
             unsigned short d = DEFAULT_TIFFTAG_SAMPLESPERPIXEL_VALUE;
             unsigned short sampleFormat = DEFAULT_TIFFTAG_SAMPLEFORMAT_VALUE;
             unsigned short bitsPerSample = DEFAULT_TIFFTAG_BITSPERSAMPLE_VALUE;
@@ -1063,15 +1064,15 @@ namespace TwkFB
             // These checks are to handle the case where the
             // tile is larger than the image size.
             //
-            uint32 copy_rowsize = ((w < tw) ? (w * rowsize / tw) : rowsize);
+            uint32_t copy_rowsize = ((w < tw) ? (w * rowsize / tw) : rowsize);
 
-            for (uint32 plane = 0; plane < d && fb; plane++)
+            for (uint32_t plane = 0; plane < d && fb; plane++)
             {
                 fb->setOrientation(o);
 
-                for (uint32 row = 0; row < h; row += th)
+                for (uint32_t row = 0; row < h; row += th)
                 {
-                    for (uint32 col = 0; col < w; col += tw)
+                    for (uint32_t col = 0; col < w; col += tw)
                     {
                         if (TIFFReadTile(tif, buf, col, row, 0, plane) < 0)
                         {
@@ -1139,7 +1140,7 @@ namespace TwkFB
         unsigned short sampleFormat = DEFAULT_TIFFTAG_SAMPLEFORMAT_VALUE;
         TIFFGetField(tif, TIFFTAG_SAMPLEFORMAT, &sampleFormat);
 
-        uint16 config;
+        uint16_t config;
         TIFFGetField(tif, TIFFTAG_PLANARCONFIG, &config);
 
         float x_rez, y_rez;
@@ -1360,14 +1361,14 @@ namespace TwkFB
             unsigned short bitsPerSample = DEFAULT_TIFFTAG_BITSPERSAMPLE_VALUE;
             FrameBuffer::DataType dataType = FrameBuffer::UCHAR;
             unsigned short samplesPerPixel = DEFAULT_TIFFTAG_SAMPLESPERPIXEL_VALUE;
-            uint16 config;
+            uint16_t config;
             bool istexture = false;
             bool isshadow = false;
             char* texformat = 0;
             char* datetime = 0;
             unsigned short colorspace = 2;
             float x_rez, y_rez;
-            uint16 numExtra = 0, *extraSamples = 0;
+            uint16_t numExtra = 0, *extraSamples = 0;
             unsigned short sampleFormat = DEFAULT_TIFFTAG_SAMPLEFORMAT_VALUE;
 
             TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &colorspace);
@@ -1476,16 +1477,16 @@ namespace TwkFB
 
             if (readAsRGBA)
             {
-                uint32* p = fb.begin<uint32>();
-                const uint32* e = fb.end<uint32>();
+                uint32_t* p = fb.begin<uint32_t>();
+                const uint32_t* e = fb.end<uint32_t>();
 
                 TIFFReadRGBAImage(tif, width, height, p, 0);
 
 #ifdef __BIG_ENDIAN__
                 for (; p < e; p++)
                 {
-                    const uint32 i = *p;
-                    *p = (uint32(TIFFGetR(i)) << 24) | (uint32(TIFFGetG(i)) << 16) | (uint32(TIFFGetB(i)) << 8) | uint32(TIFFGetA(i));
+                    const uint32_t i = *p;
+                    *p = (uint32_t(TIFFGetR(i)) << 24) | (uint32_t(TIFFGetG(i)) << 16) | (uint32_t(TIFFGetB(i)) << 8) | uint32_t(TIFFGetA(i));
                 }
 #endif
             }
@@ -1792,8 +1793,8 @@ namespace TwkFB
 
         if (outfb->hasChannel("A") && outfb->numChannels() > 1)
         {
-            uint16 extrasamples = 1;
-            uint16 sampleinfo[1] = {EXTRASAMPLE_ASSOCALPHA};
+            uint16_t extrasamples = 1;
+            uint16_t sampleinfo[1] = {EXTRASAMPLE_ASSOCALPHA};
             TIFFSetField(tif, TIFFTAG_EXTRASAMPLES, extrasamples, sampleinfo);
         }
 
