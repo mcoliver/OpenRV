@@ -1030,7 +1030,12 @@ namespace Mu
         PyLockObject locker;
         MuLangContext* c = static_cast<MuLangContext*>(NODE_THREAD.context());
         PyObject* obj = NODE_ARG_OBJECT(0, PyObject);
-        NODE_RETURN(c->stringType()->allocate(PyModule_GetFilename(obj)));
+        // PyModule_GetFilename is deprecated, use PyModule_GetFilenameObject
+        PyObject* filenameObj = PyModule_GetFilenameObject(obj);
+        const char* filename = filenameObj ? PyUnicode_AsUTF8(filenameObj) : "";
+        Pointer result = c->stringType()->allocate(filename);
+        Py_XDECREF(filenameObj);
+        NODE_RETURN(result);
     }
 
     NODE_IMPLEMENTATION(PyModule::nPyFunction_Check, bool)
