@@ -27,6 +27,11 @@ ADD_COMPILE_OPTIONS(
   -mfpmath=sse
 )
 
+# Hide warnings about casting function types in Qt and pyside
+ADD_COMPILE_OPTIONS(
+  -Wno-cast-function-type-mismatch
+)
+
 IF(${CMAKE_BUILD_TYPE} STREQUAL "Release")
   # Release build specific options
   ADD_COMPILE_OPTIONS(-DNDEBUG -O3 # Maximum optimization
