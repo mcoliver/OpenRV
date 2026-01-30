@@ -30,6 +30,10 @@ IF(${CMAKE_BUILD_TYPE} STREQUAL "Release")
   # Release build specific options
   ADD_COMPILE_OPTIONS(-DNDEBUG -O3 # Maximum optimization
   )
+  ADD_COMPILE_OPTIONS(
+    -Wno-cast-function-type-mismatch
+    -Wno-parentheses
+  )
 ELSEIF(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   # Debug build specific options
   ADD_COMPILE_OPTIONS(
