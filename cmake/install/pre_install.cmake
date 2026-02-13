@@ -52,11 +52,16 @@ FUNCTION(before_copy FILE_PATH RET_VAL)
   ENDIF()
 
   IF(FILE_PATH MATCHES "\\.prl$"
+     OR FILE_PATH MATCHES "/\\.git/"
+     OR FILE_PATH MATCHES "/\\.gitignore$"
      OR FILE_PATH MATCHES "\\.o$"
      OR FILE_PATH MATCHES "\\.obj$"
      OR FILE_PATH MATCHES "\\.a$"
      OR FILE_PATH MATCHES "\\.la$"
      OR FILE_PATH MATCHES "\\.c$"
+     OR FILE_PATH MATCHES "\\.h$"
+     OR FILE_PATH MATCHES "\\.hpp$"
+     OR FILE_PATH MATCHES "/include/"
   )
     SET(${RET_VAL}
         "NO"
