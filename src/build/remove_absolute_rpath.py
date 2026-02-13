@@ -15,6 +15,8 @@ import pathlib
 from pathlib import Path
 import subprocess
 import threading
+import shutil
+import stat
 
 
 future_lock = threading.Lock()
@@ -31,16 +33,25 @@ def get_object_files(target):
         for root, dirs, files in os.walk(target):
             for f in files:
                 path = Path(root) / f
+                # Skip symlinks to avoid infinite loops or processing same file twice
+                if path.is_symlink():
+                    continue
 
-                file_type = subprocess.check_output(["file", "-bh", path])
-                if file_type.startswith(b"Mach-O"):
-                    yield str(path.absolute())
+                try:
+                    file_type = subprocess.check_output(["file", "-bh", str(path)])
+                    if file_type.startswith(b"Mach-O"):
+                        yield str(path.absolute())
+                except subprocess.CalledProcessError:
+                    pass
     else:
         yield target
 
 
 def get_rpaths(object_file_path):
-    otool_output = subprocess.check_output(["otool", "-l", object_file_path]).decode().splitlines()
+    try:
+        otool_output = subprocess.check_output(["otool", "-l", object_file_path]).decode().splitlines()
+    except subprocess.CalledProcessError:
+        return
 
     i = 0
     while i < len(otool_output):
@@ -52,15 +63,19 @@ def get_rpaths(object_file_path):
 
         if otool_line.split()[-1] == "LC_RPATH":
             for y in range(i, i + 2):
+                if y >= len(otool_output): break
                 rpath_line = otool_output[y].split()
 
-                if rpath_line[0] == "path":
+                if len(rpath_line) > 1 and rpath_line[0] == "path":
                     yield rpath_line[1]
                     break
 
 
 def get_shared_library_paths(object_file_path):
-    otool_output = subprocess.check_output(["otool", "-L", object_file_path]).decode().splitlines()
+    try:
+        otool_output = subprocess.check_output(["otool", "-L", object_file_path]).decode().splitlines()
+    except subprocess.CalledProcessError:
+        return
 
     i = 0
 
@@ -82,11 +97,11 @@ def delete_rpath(object_file_path, rpath):
     # Don't fail if the rpath doesn't exist (can happen during incremental rebuilds)
     if result.returncode != 0:
         if "no LC_RPATH load command" not in result.stderr:
-            # Only fail for actual errors, not missing rpaths
-            result.check_returncode()
+            logging.warning(f"Failed to delete rpath {rpath} from {object_file_path}: {result.stderr}")
         else:
             logging.info(f"\tRpath {rpath} not found in {object_file_path}, skipping")
-
+            return False
+    return True
 
 def change_shared_library_path(object_file_path, old_library_path):
     new_library_path = f"@rpath/{os.path.basename(old_library_path)}"
@@ -98,23 +113,60 @@ def change_shared_library_path(object_file_path, old_library_path):
         new_library_path,
         object_file_path,
     ]
-    subprocess.run(change_shared_library_path_command).check_returncode()
+    result = subprocess.run(change_shared_library_path_command, capture_output=True, text=True)
+    if result.returncode != 0:
+        logging.error(f"Failed to change install name: {result.stderr}")
+        raise subprocess.CalledProcessError(result.returncode, change_shared_library_path_command, result.stdout, result.stderr)
 
     return new_library_path
 
 
-def fix_rpath(target, root):
-    for file in get_object_files(target):
-        logging.info(f"Fixing rpaths for {file}")
+def get_bundle_lib_dir(object_file_path):
+    path = pathlib.Path(object_file_path)
+    for parent in path.parents:
+        if parent.name == "Contents":
+            lib_dir = parent / "lib"
+            if not lib_dir.exists():
+                try:
+                    lib_dir.mkdir(parents=True, exist_ok=True)
+                except OSError:
+                    return None
+            return lib_dir
+    return None
 
-        # Skipping numpy because there are some dylib in .dylibs in number folder that
-        # become invalid due to our rpath fixing logic.
-        # IMPORTANT:
-        #    Numpy was the only issue found, but it could happend again if new dependencies are added.
-        is_numpy = file._str.find("numpy")
-        if is_numpy > -1:
-            logging.info(f"Skipping {file} because numpy")
-            return
+
+def is_system_lib(lib_path):
+    return lib_path.startswith("/usr/lib") or lib_path.startswith("/System/Library")
+
+
+def get_file_type(path):
+    try:
+        return subprocess.check_output(["file", "-bh", str(path)]).decode()
+    except:
+        return ""
+
+def sign_file(file_path):
+    try:
+        # Ad-hoc signing
+        subprocess.run(["codesign", "--force", "--sign", "-", str(file_path)], check=True, capture_output=True)
+        logging.info(f"\tSigned {file_path}")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Failed to sign {file_path}: {e.stderr.decode()}")
+
+def fix_rpath(target, root):
+    # Ensure target is writable
+    try:
+        st = os.stat(target)
+        os.chmod(target, st.st_mode | stat.S_IWUSR)
+    except OSError:
+        logging.warning(f"Could not make {target} writable.")
+
+    for file in get_object_files(target):
+        logging.info(f"Inspecting file: {file}")
+        
+        needs_signing = False
+
+        # Removed numpy skip check to ensure comprehensive coverage
 
         # Prevent delete the same rpath multiple time (e.g. MacOS fat binary).
         deletedRPATH = []
@@ -122,7 +174,8 @@ def fix_rpath(target, root):
             output = f"\trpath: {rpath}"
 
             if rpath.startswith("@") is False and rpath.startswith(".") is False and rpath not in deletedRPATH:
-                delete_rpath(file, rpath)
+                if delete_rpath(file, rpath):
+                    needs_signing = True
                 deletedRPATH.append(rpath)
                 output += " (Deleted)"
 
@@ -130,15 +183,83 @@ def fix_rpath(target, root):
 
         logging.info(f"Fixing shared library paths for {file}")
 
-        for library_path in get_shared_library_paths(file):
+        file_type = get_file_type(file)
+        is_dylib = "shared library" in file_type
+        
+        libs = list(get_shared_library_paths(file))
+        if not libs: 
+            if needs_signing:
+                sign_file(file)
+            continue
+        
+        bundle_lib_dir = get_bundle_lib_dir(file)
+        
+        start_index = 0
+        if is_dylib:
+             # First entry is ID
+             old_id = libs[0]
+             start_index = 1
+             
+             # Fix ID if needed (only if absolute and not system)
+             if os.path.isabs(old_id) and not is_system_lib(old_id):
+                 # Fix ID
+                 new_id = f"@rpath/{os.path.basename(old_id)}"
+                 try:
+                     subprocess.run(["install_name_tool", "-id", new_id, file]).check_returncode()
+                     logging.info(f"\tUpdated ID from {old_id} to {new_id}")
+                     needs_signing = True
+                 except Exception as e:
+                     logging.error(f"Failed to update ID: {e}")
+
+        # Fix Dependencies
+        for library_path in libs[start_index:]:
             output = f"\tlibrary path: {library_path}"
 
             shared_library_name = os.path.basename(library_path)
-            if library_path.startswith(root) or library_path == shared_library_name:
-                new_library_path = change_shared_library_path(file, library_path)
-                output += f" (Changed to {new_library_path})"
+            
+            # Identify if we need to fix this path
+            needs_fix = False
+            
+            # Check if it is a system library
+            if is_system_lib(library_path):
+                continue
+
+            # If it is absolute, we almost certainly want to fix it
+            if os.path.isabs(library_path):
+                needs_fix = True
+            elif library_path == shared_library_name:
+                 # Bare filename, safer to convert to @rpath
+                 needs_fix = True
+            
+            if needs_fix:
+                # If it's an external absolute path (not in the bundle already), copy it.
+                if os.path.isabs(library_path) and os.path.exists(library_path) and bundle_lib_dir:
+                     dest_path = bundle_lib_dir / shared_library_name
+                     
+                     if not dest_path.exists():
+                         logging.info(f"\tCopying {library_path} to {dest_path}")
+                         try:
+                             shutil.copy2(library_path, dest_path)
+                             # Ensure writable
+                             os.chmod(dest_path, os.stat(dest_path).st_mode | stat.S_IWUSR)
+                             
+                             # Recursively fix the copied library
+                             fix_rpath(str(dest_path), root)
+                             # Note: fix_rpath will sign the copied file itself
+                         except Exception as e:
+                             logging.error(f"Failed to copy {library_path}: {e}")
+
+                try:
+                    new_library_path = change_shared_library_path(file, library_path)
+                    output += f" (Changed to {new_library_path})"
+                    needs_signing = True
+                except Exception as e:
+                     logging.error(f"Error changing path for {library_path}: {e}")
 
             logging.info(output)
+            
+        if needs_signing:
+            sign_file(file)
 
 
 def read_paths_from_file(file_path):
@@ -173,11 +294,10 @@ if __name__ == "__main__":
     if args.root_dir.exists() is False:
         raise FileNotFoundError(f"Unable to locate {args.root_dir.absolute()}")
 
-    # file option has priority over files-list.
     if args.file:
-        # Fail if file is not in root
-        if args.file.resolve().relative_to(args.root_dir.resolve()) is False:
-            raise ValueError(f"File {args.file.absolute()} is not in root {args.root_dir.absolute()}")
+        # Direct file processing
+        fix_rpath(str(args.file), str(args.root_dir.resolve().absolute()))
+        
     elif args.files_list:
         paths = read_paths_from_file(str(args.files_list.resolve().absolute()))
         with concurrent.futures.ThreadPoolExecutor() as executor:
