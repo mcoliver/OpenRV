@@ -168,6 +168,15 @@ ELSEIF(RV_VFX_PLATFORM STRGREATER_EQUAL CY2024)
   LIST(APPEND _pyside_make_command ${RV_DEPS_QT_LOCATION})
   LIST(APPEND _pyside_make_command "--python-version")
   LIST(APPEND _pyside_make_command "${RV_DEPS_PYTHON_VERSION_SHORT}")
+
+  IF(RV_TARGET_DARWIN
+     AND CMAKE_OSX_ARCHITECTURES
+  )
+    # PySide6's setup.py expects a comma-separated list for --macos-arch
+    STRING(REPLACE ";" "," _pyside_macos_archs "${CMAKE_OSX_ARCHITECTURES}")
+    LIST(APPEND _pyside_make_command "--macos-arch")
+    LIST(APPEND _pyside_make_command "${_pyside_macos_archs}")
+  ENDIF()
 ENDIF()
 
 IF(RV_TARGET_WINDOWS)

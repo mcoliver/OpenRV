@@ -219,6 +219,29 @@ def build() -> None:
     python_home = PYTHON_OUTPUT_DIR
     python_interpreter_args = get_python_interpreter_args(python_home, VARIANT)
 
+    # Default modules for OpenRV - limiting to these significantly speeds up the build
+    # while providing everything needed for RV and its common plugins.
+    default_modules = [
+        "QtCore",
+        "QtGui",
+        "QtWidgets",
+        "QtNetwork",
+        "QtUiTools",
+        "QtWebChannel",
+        "QtWebEngineCore",
+        "QtWebEngineWidgets",
+        "QtQml",
+        "QtQuick",
+        "QtQuickWidgets",
+        "QtPrintSupport",
+        "QtOpenGL",
+        "QtOpenGLWidgets",
+        "QtSvg",
+        "QtXml",
+        "QtConcurrent",
+        "QtTest",
+    ]
+
     pyside_build_args = python_interpreter_args + [
         os.path.join(SOURCE_DIR, "setup.py"),
         "install",
@@ -228,8 +251,14 @@ def build() -> None:
         "--verbose",
         "--verbose-build",
         "--log-level=verbose",
+        "--skip-docs",
+        "--no-examples",
+        f"--modules={','.join(default_modules)}",
         f"--parallel={os.cpu_count() or 1}",
     ]
+
+    if platform.system() == "Darwin" and MACOS_ARCH:
+        pyside_build_args.append(f"--macos-arch={MACOS_ARCH}")
 
     if OPENSSL_OUTPUT_DIR:
         pyside_build_args.append(f"--openssl={os.path.join(OPENSSL_OUTPUT_DIR, 'bin')}")
@@ -302,6 +331,8 @@ if __name__ == "__main__":
     # Major and minor version with dots.
     parser.add_argument("--python-version", dest="python_version", type=str, required=True, default="")
 
+    parser.add_argument("--macos-arch", dest="macos_arch", type=str, required=False, default="")
+
     parser.set_defaults(prepare=False, build=False)
 
     args = parser.parse_args()
@@ -314,6 +345,7 @@ if __name__ == "__main__":
     QT_OUTPUT_DIR = args.qt
     VARIANT = args.variant
     PYTHON_VERSION = args.python_version
+    MACOS_ARCH = args.macos_arch
     print(args)
 
     if args.prepare:
