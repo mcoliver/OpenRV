@@ -1885,9 +1885,16 @@ namespace IPCore
         if (!img->hasPaintRecursive && img->commands.empty())
             return;
 
-        if (img->renderType == IPImage::GroupType || img->renderType == IPImage::ExternalRenderType)
+        //
+        //  Recurse into children.
+        //  IMPORTANT: Do NOT recurse into IntermediateBuffer or TemporaryBuffer
+        //  nodes because they will be (or have been) handled by renderIntermediate()
+        //  which calls renderPaintRecursive() via renderCurrentImage().
+        //
+
+        for (const IPImage* child = img->children; child; child = child->next)
         {
-            for (const IPImage* child = img->children; child; child = child->next)
+            if (child->destination != IPImage::IntermediateBuffer && child->destination != IPImage::TemporaryBuffer)
             {
                 renderPaintRecursive(child, fbo);
             }
@@ -2403,9 +2410,6 @@ namespace IPCore
             FFP.setViewport(0, 0, fbo->width(), fbo->height());
             auxRender->render(VideoDevice::IndependentDisplayMode, left, right, controller, !controller);
             m_rootContext = 0;
-
-            if (!context.norender)
-                renderPaintRecursive(image, fbo);
         }
     }
 
@@ -2485,9 +2489,6 @@ namespace IPCore
         }
 
         renderAllChildren(context);
-
-        if (!context.norender)
-            renderPaintRecursive(context.image, fbo);
 
         if (controller && (dest == IPImage::LeftBuffer || dest == IPImage::RightBuffer))
         {
@@ -2810,8 +2811,8 @@ namespace IPCore
         //
         ostringstream o;
         o << image->renderIDHash();
-        o << "ft" << m_filter;
-        o << "bg" << m_bgpattern;
+        o << "ft" << (m_filter >= 0 && m_filter < 100 ? m_filter : 0);
+        o << "bg" << (m_bgpattern >= 0 && m_bgpattern < 100 ? m_bgpattern : 0);
         return o.str();
     }
 
@@ -4855,6 +4856,10 @@ namespace IPCore
     void ImageRenderer::renderPaint(const IPImage* root, const GLFBO* fbo)
     {
         if (!root || !root->node || !fbo || !m_glState)
+            return;
+
+        // Ensure we have a valid GL context and the FBO is valid
+        if (fbo->fboID() != 0 && !glIsFramebuffer(fbo->fboID()))
             return;
 
         //

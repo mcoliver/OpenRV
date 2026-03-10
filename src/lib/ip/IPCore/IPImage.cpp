@@ -427,14 +427,26 @@ namespace IPCore
     {
         if (!img)
             return;
-        if (img->hasPaintRecursive)
-            hasPaintRecursive = true;
         IPImage* i;
+        bool anyHasPaint = img->hasPaintRecursive;
         for (i = this; i->next; i = i->next)
         {
-            if (img->hasPaintRecursive)
-                i->hasPaintRecursive = true;
+            if (i->hasPaintRecursive)
+                anyHasPaint = true;
         }
+        if (i->hasPaintRecursive)
+            anyHasPaint = true;
+
+        if (anyHasPaint)
+        {
+            for (i = this; i; i = i->next)
+                i->hasPaintRecursive = true;
+            img->hasPaintRecursive = true;
+        }
+
+        // find last again
+        for (i = this; i->next; i = i->next)
+            ;
         i->next = img;
     }
 
