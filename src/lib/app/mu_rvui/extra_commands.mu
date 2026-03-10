@@ -1069,7 +1069,7 @@ frames may appear more than once.
     string[] tempProps;
     let seqb = sequenceBoundaries();
     let testFrames = if seqb.empty() then int[](frameStart()) else seqb;
-    if (node eq nil) node = viewNode();
+    if (node eq nil) node = rootNode();
 
     for_each (f; testFrames)
     {

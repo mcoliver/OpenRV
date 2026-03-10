@@ -43,7 +43,7 @@ namespace IPCore
         string pipelineType = def->stringValue("defaults.pipelineType", "PipelineGroup");
         string resizeType = def->stringValue("defaults.resizeType", "");
         int autoResize = def->intValue("defaults.autoResize", 1);
-        bool writable = def->intValue("defaults.persistent", 0);
+        bool writable = true; // Force persistence for DisplayGroup to save internal paint nodes
 
         PropertyInfo* outputOnly = new PropertyInfo(PropertyInfo::OutputOnly);
         PropertyInfo* notPersistent = new PropertyInfo(PropertyInfo::NotPersistent | PropertyInfo::OutputOnly);

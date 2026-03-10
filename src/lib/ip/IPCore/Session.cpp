@@ -5980,6 +5980,17 @@ namespace IPCore
             {
                 writeNodes.insert(i->second);
             }
+
+            // Explicitly collect display-level paint nodes since they are members
+            // of the DisplayGroup and not normally saved as top-level nodes.
+            const IPGraph::DisplayGroups& dgroups = graph().displayGroups();
+            for (size_t i = 0; i < dgroups.size(); i++)
+            {
+                if (PaintIPNode* p = dgroups[i]->paintNode())
+                {
+                    writeNodes.insert(p);
+                }
+            }
         }
         else if (recursive)
         {
