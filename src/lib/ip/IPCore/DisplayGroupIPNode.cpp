@@ -89,6 +89,8 @@ namespace IPCore
         m_paintNode = newMemberNodeOfType<PaintIPNode>("RVPaint", "paint");
         m_paintNode->setInputs1(m_displayPipelineNode);
         m_paintNode->declareProperty<StringProperty>("tag.annotate", "true");
+        // Ensure this paint node is saved to the session file
+        m_paintNode->declareProperty<IntProperty>("defaults.persistent", 1);
 
         setRoot(m_paintNode);
     }
