@@ -425,6 +425,8 @@ namespace IPCore
 
     void IPImage::append(IPImage* img)
     {
+        if (!img)
+            return;
         if (img->hasPaintRecursive)
             hasPaintRecursive = true;
         IPImage* i;
@@ -438,6 +440,8 @@ namespace IPCore
 
     void IPImage::appendChild(IPImage* img)
     {
+        if (!img)
+            return;
         if (img->hasPaintRecursive)
             hasPaintRecursive = true;
         if (children)

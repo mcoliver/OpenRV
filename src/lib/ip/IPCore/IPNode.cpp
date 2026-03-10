@@ -342,7 +342,7 @@ namespace IPCore
                 for (size_t i = 0; i < nodes.size(); i++)
                 {
                     IPImage* img = nodes[i]->evaluate(context);
-                    if (img->hasPaintRecursive)
+                    if (img && img->hasPaintRecursive)
                         head->hasPaintRecursive = true;
                     head->appendChild(img);
                 }

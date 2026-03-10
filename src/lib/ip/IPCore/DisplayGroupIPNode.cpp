@@ -207,27 +207,33 @@ namespace IPCore
             {
                 newContext.eye = 0;
                 left = m_root->evaluate(newContext);
-                left->useBackground = true;
+                if (left)
+                {
+                    left->useBackground = true;
 
-                IPImage* leftIntermediate =
-                    new IPImage(this, imageDevice(), IPImage::BlendRenderType, IPImage::IntermediateBuffer, IPImage::Rect2DSampler, false);
-                leftIntermediate->appendChild(left);
-                leftIntermediate->shaderExpr = Shader::newSourceRGBA(leftIntermediate);
-                left = leftIntermediate;
+                    IPImage* leftIntermediate = new IPImage(this, imageDevice(), IPImage::BlendRenderType, IPImage::IntermediateBuffer,
+                                                            IPImage::Rect2DSampler, false);
+                    leftIntermediate->appendChild(left);
+                    leftIntermediate->shaderExpr = Shader::newSourceRGBA(leftIntermediate);
+                    left = leftIntermediate;
+                }
 
                 newContext2.eye = 1;
                 right = m_root->evaluate(newContext2);
-                right->useBackground = true;
+                if (right)
+                {
+                    right->useBackground = true;
 
-                IPImage* rightIntermediate =
-                    new IPImage(this, imageDevice(), IPImage::BlendRenderType, IPImage::IntermediateBuffer, IPImage::Rect2DSampler, false);
-                rightIntermediate->appendChild(right);
-                rightIntermediate->shaderExpr = Shader::newSourceRGBA(rightIntermediate);
-                right = rightIntermediate;
+                    IPImage* rightIntermediate = new IPImage(this, imageDevice(), IPImage::BlendRenderType, IPImage::IntermediateBuffer,
+                                                             IPImage::Rect2DSampler, false);
+                    rightIntermediate->appendChild(right);
+                    rightIntermediate->shaderExpr = Shader::newSourceRGBA(rightIntermediate);
+                    right = rightIntermediate;
+                }
 
-                if (flip)
+                if (left && flip)
                     left->transformMatrix = M * left->transformMatrix;
-                if (flip)
+                if (right && flip)
                     right->transformMatrix = M * right->transformMatrix;
             }
             catch (...)
@@ -299,23 +305,27 @@ namespace IPCore
             {
                 IPImage* image = m_root->evaluate(newContext);
 
-                if (flip)
-                    image->transformMatrix = M * image->transformMatrix;
-                image->useBackground = true;
+                if (image)
+                {
+                    if (flip)
+                        image->transformMatrix = M * image->transformMatrix;
+                    image->useBackground = true;
 
-                // Wrap the paint node's output in an intermediate buffer.
-                // This ensures renderPaint has a dedicated FBO to draw into,
-                // avoiding issues with rendering directly to the final output buffer.
-                IPImage* intermediate =
-                    new IPImage(this, imageDevice(), IPImage::BlendRenderType, IPImage::IntermediateBuffer, IPImage::Rect2DSampler, false);
-                intermediate->appendChild(image);
-                intermediate->shaderExpr = Shader::newSourceRGBA(intermediate);
-                image = intermediate;
+                    // Wrap the paint node's output in an intermediate buffer.
+                    // This ensures renderPaint has a dedicated FBO to draw into,
+                    // avoiding issues with rendering directly to the final output buffer.
+                    IPImage* intermediate = new IPImage(this, imageDevice(), IPImage::BlendRenderType, IPImage::IntermediateBuffer,
+                                                        IPImage::Rect2DSampler, false);
+                    intermediate->appendChild(image);
+                    intermediate->shaderExpr = Shader::newSourceRGBA(intermediate);
+                    image = intermediate;
+                }
 
                 IPImage* eimage = new IPImage(this, imageDevice(), IPImage::ExternalRenderType, IPImage::CurrentFrameBuffer,
                                               IPImage::Rect2DSampler, false);
 
-                eimage->appendChild(image);
+                if (image)
+                    eimage->appendChild(image);
 
                 if (yuvConvert)
                 {
