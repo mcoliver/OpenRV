@@ -646,7 +646,6 @@ namespace IPCore
             setPaintEffects();
 
             LocalCommands visibleCommands = generateVisibleCommands(frameCommands, frame, context.eye, m_paintEffects);
-
             for (auto* visibleCommand : visibleCommands)
             {
                 if (auto* polyLine = dynamic_cast<PaintIPNode::LocalPolyLine*>(visibleCommand))

@@ -5,6 +5,7 @@
 //  SPDX-License-Identifier: Apache-2.0
 //
 //
+#include <IPBaseNodes/PaintIPNode.h>
 #include <IPCore/AdaptorIPNode.h>
 #include <IPCore/DisplayGroupIPNode.h>
 #include <IPCore/DisplayStereoIPNode.h>
@@ -85,7 +86,11 @@ namespace IPCore
             m_displayPipelineNode->setInputs1(m_adaptor);
         }
 
-        setRoot(m_displayPipelineNode);
+        m_paintNode = newMemberNodeOfType<PaintIPNode>("RVPaint", "paint");
+        m_paintNode->setInputs1(m_displayPipelineNode);
+        m_paintNode->declareProperty<StringProperty>("tag.annotate", "true");
+
+        setRoot(m_paintNode);
     }
 
     DisplayGroupIPNode::~DisplayGroupIPNode()
@@ -200,15 +205,23 @@ namespace IPCore
             {
                 newContext.eye = 0;
                 left = m_root->evaluate(newContext);
-                if (!yuvConvert)
-                    left = insertIntermediateRendersForPaint(left, newContext);
                 left->useBackground = true;
+
+                IPImage* leftIntermediate =
+                    new IPImage(this, imageDevice(), IPImage::BlendRenderType, IPImage::IntermediateBuffer, IPImage::Rect2DSampler, false);
+                leftIntermediate->appendChild(left);
+                leftIntermediate->shaderExpr = Shader::newSourceRGBA(leftIntermediate);
+                left = leftIntermediate;
 
                 newContext2.eye = 1;
                 right = m_root->evaluate(newContext2);
-                if (!yuvConvert)
-                    right = insertIntermediateRendersForPaint(right, newContext);
                 right->useBackground = true;
+
+                IPImage* rightIntermediate =
+                    new IPImage(this, imageDevice(), IPImage::BlendRenderType, IPImage::IntermediateBuffer, IPImage::Rect2DSampler, false);
+                rightIntermediate->appendChild(right);
+                rightIntermediate->shaderExpr = Shader::newSourceRGBA(rightIntermediate);
+                right = rightIntermediate;
 
                 if (flip)
                     left->transformMatrix = M * left->transformMatrix;
@@ -283,12 +296,19 @@ namespace IPCore
             try
             {
                 IPImage* image = m_root->evaluate(newContext);
-                if (!yuvConvert)
-                    image = insertIntermediateRendersForPaint(image, newContext);
 
                 if (flip)
                     image->transformMatrix = M * image->transformMatrix;
                 image->useBackground = true;
+
+                // Wrap the paint node's output in an intermediate buffer.
+                // This ensures renderPaint has a dedicated FBO to draw into,
+                // avoiding issues with rendering directly to the final output buffer.
+                IPImage* intermediate =
+                    new IPImage(this, imageDevice(), IPImage::BlendRenderType, IPImage::IntermediateBuffer, IPImage::Rect2DSampler, false);
+                intermediate->appendChild(image);
+                intermediate->shaderExpr = Shader::newSourceRGBA(intermediate);
+                image = intermediate;
 
                 IPImage* eimage = new IPImage(this, imageDevice(), IPImage::ExternalRenderType, IPImage::CurrentFrameBuffer,
                                               IPImage::Rect2DSampler, false);

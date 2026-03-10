@@ -356,6 +356,8 @@ namespace IPCore
                 , node(0)
                 , device(0)
                 , serialNum(0)
+                , textureID(0)
+                , textureTarget(0)
             {
             }
 
@@ -387,6 +389,7 @@ namespace IPCore
             size_t serialNum;
             size_t imageNum;
             GLuint textureID;
+            GLuint textureTarget;
             bool isVirtual;
             bool touched;
             bool render;
@@ -780,6 +783,8 @@ namespace IPCore
         // resets node ptr on all rendered image links to this node
         void unlinkNode(IPCore::IPNode* node);
 
+        const bool GLContextNotSet() const { return !m_setGLContext; }
+
     private:
         //
         // OPENCL
@@ -800,6 +805,7 @@ namespace IPCore
 
         void renderImage(InternalRenderContext&);
         void renderPaint(const IPImage*, const GLFBO*);
+        void renderPaintRecursive(const IPImage*, const GLFBO*);
 
         void renderExternal(InternalRenderContext&);
         void renderRootBuffer(InternalRenderContext&);
@@ -932,8 +938,6 @@ namespace IPCore
         bool imageHasEraseCommands(const IPImage* image) const;
 
         void createGLContexts();
-
-        const bool GLContextNotSet() const { return !m_setGLContext; }
 
         //
         // OPENCL

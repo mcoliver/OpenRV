@@ -607,6 +607,14 @@ describing the resulting rendered images at that pixel.
 The PixelImageInfo objects will be in order of front to back.
 """
 
+nodePixelValue """
+Given a point in event space (whatever the Event object returns for
+the pointer value) and a node name, returns the color
+of the pixel as it was rendered by that node in the last frame.
+If the node was not rendered or is not an intermediate buffer,
+returns a vector with -1.0 in the alpha channel.
+"""
+
 
 sourcesAtFrame """
 Returns an array of the names of source nodes (RVFileSource or

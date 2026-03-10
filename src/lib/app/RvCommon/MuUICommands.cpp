@@ -5,10 +5,10 @@
 //
 //******************************************************************************
 
+#include <TwkGLF/GL.h>
 #ifdef PLATFORM_WINDOWS
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#include <TwkGLF/GL.h>
 #include <TwkGLF/GLVBO.h>
 #include <TwkGLF/GLPipeline.h>
 #include <TwkGLF/GLState.h>
@@ -401,18 +401,13 @@ namespace Rv
             int ix = (int)(x + 0.5f);
             int iy = (int)(y + 0.5f);
 
-            QImage image = glview->readPixels(ix, iy, 1, 1);
-
-            if ((image.width() > 0) && (image.height() > 0))
-            {
-                QRgb rgba = image.pixel(0, 0);
-                QColor qc(rgba);
-
-                v[0] = qc.redF();
-                v[1] = qc.greenF();
-                v[2] = qc.blueF();
-                v[3] = qc.alphaF();
-            }
+            glview->makeCurrent();
+            float pixels[4];
+            glReadPixels(ix, iy, 1, 1, GL_RGBA, GL_FLOAT, pixels);
+            v[0] = pixels[0];
+            v[1] = pixels[1];
+            v[2] = pixels[2];
+            v[3] = pixels[3];
         }
 
         NODE_RETURN(v);

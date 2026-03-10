@@ -149,6 +149,12 @@ class: AnnotateMinorMode : MinorMode
     DrawDockWidget    _drawDock;
     QToolBar          _toolBar;
     QLabel            _toolSliderLabel;
+    QLabel            _precisionLabel;
+    QDialog           _manualColorDialog;
+    QLineEdit         _rEdit;
+    QLineEdit         _gEdit;
+    QLineEdit         _bEdit;
+    QLineEdit         _aEdit;
     QtColorTriangle   _colorTriangle;
     bool              _setColorLock;
     bool              _activeSampleColor;
@@ -157,6 +163,10 @@ class: AnnotateMinorMode : MinorMode
 
     QWidget           _managePane;
     QWidget           _drawPane;
+
+    DisplayLayer      := 0;
+    WorkingSpaceLayer := 1;
+    int               _samplingLayer;
 
     bool              _syncWholeStrokes;
     bool              _syncAutoStart;
@@ -234,13 +244,14 @@ class: AnnotateMinorMode : MinorMode
 
     method: findPaintNodes (MetaEvalInfo[];)
     {
-        let infos = metaEvaluate(frame(), viewNode());
+        let infos = metaEvaluate(frame(), rootNode());
         MetaEvalInfo[] nodes;
 
         for_each (i; infos)
         {
             if (i.nodeType == "RVPaint") nodes.push_back(i);
         }
+
 
         return nodes;
     }
@@ -298,9 +309,24 @@ class: AnnotateMinorMode : MinorMode
                 }
                 else
                 {
-                    _currentNodeInfo = infos.front();
+                    // Preference: if there is a paint node in a display group, 
+                    // and we are NOT storing on source, pick that one first.
+                    // Otherwise pick the first one.
+                    
+                    MetaEvalInfo best = infos.front();
+                    for_each (i; infos)
+                    {
+                        if (regex.match("displayGroup.*", i.node))
+                        {
+                            best = i;
+                            break;
+                        }
+                    }
+                    
+                    _currentNodeInfo = best;
                     _currentNode = _currentNodeInfo.node;
                 }
+                
             }
         }
         catch (...)
@@ -321,6 +347,7 @@ class: AnnotateMinorMode : MinorMode
         writeSetting("Annotate", "storeOnSrc", Bool(_storeOnSrc));
         writeSetting("Annotate", "autoMark", Bool(_autoMark));
         writeSetting("Annotate", "linkToolColors", Bool(_linkToolColors));
+        writeSetting("Annotate", "samplingLayer", Int(_samplingLayer));
 
         for_each (d; _drawModes)
         {
@@ -349,6 +376,7 @@ class: AnnotateMinorMode : MinorMode
             Bool b4 = readSetting("Annotate", "storeOnSrc", Bool(false)),
             Bool b5 = readSetting("Annotate", "autoMark", Bool(false)),
             Bool b6 = readSetting("Annotate", "linkToolColors", Bool(false));
+        let Int sl = readSetting("Annotate", "samplingLayer", Int(DisplayLayer));
 
         _syncWholeStrokes = b0;
         _showBrush        = b1;
@@ -357,6 +385,7 @@ class: AnnotateMinorMode : MinorMode
         _storeOnSrc       = b4;
         _autoMark         = b5;
         _linkToolColors   = b6;
+        _samplingLayer    = sl;
 
         let String name = readSetting("Annotate", "drawmode", String("Pen"));
 
@@ -797,6 +826,7 @@ class: AnnotateMinorMode : MinorMode
                 devicePixelRatio = devicePixelRatio(),
                 ip    = event.pointer()*devicePixelRatio;
 
+
             _pointer = ip;
             _pointerRadius = mag(imageToEventSpace(name, ip, true)
                                  - imageToEventSpace(name, ip + Point(0,_currentDrawMode.size), true));
@@ -868,6 +898,74 @@ class: AnnotateMinorMode : MinorMode
         push(event);
     }
 
+    method: workingSpaceNodeName (string;)
+    {
+        string node = nil;
+
+        // Try to find the OCIODisplay node
+        let ocioNodes = nodesOfType("OCIODisplay");
+        if (!ocioNodes.empty()) node = ocioNodes.front();
+
+        // Fallback to RVDisplayColor node
+        if (node eq nil)
+        {
+            let displayColorNodes = nodesOfType("RVDisplayColor");
+            if (!displayColorNodes.empty()) node = displayColorNodes.front();
+        }
+
+        if (node neq nil)
+        {
+            // We have a display node. We want the node BEFORE color adjustments.
+            // Walk back through RVDisplayColor and RVColor nodes.
+            
+            while (node neq nil)
+            {
+                let type = nodeType(node);
+                if (type == "OCIODisplay" || type == "RVDisplayColor" || type == "RVColor")
+                {
+                    let inOut = nodeConnections(node);
+                    let ins = inOut._0;
+                    if (!ins.empty()) node = ins.front();
+                    else break;
+                }
+                else
+                {
+                    // Found a node that is not a known color adjustment node.
+                    return node;
+                }
+            }
+            return node;
+        }
+        
+        return nil;
+    }
+
+    method: setSamplingLayerSlot (void; bool checked, int layer)
+    {
+        _samplingLayer = layer;
+        saveSettings();
+        
+        // Select the dropper tool
+        setDrawModeSlot(true, _dropperDrawMode);
+    }
+
+    method: sampleContextMenu (void; QPoint pos)
+    {
+        QMenu menu = QMenu(_dropperButton);
+        
+        QAction a1 = menu.addAction("Display Color");
+        a1.setCheckable(true);
+        a1.setChecked(_samplingLayer == DisplayLayer);
+        connect(a1, QAction.triggered, setSamplingLayerSlot(,DisplayLayer));
+
+        QAction a2 = menu.addAction("Working Space Color");
+        a2.setCheckable(true);
+        a2.setChecked(_samplingLayer == WorkingSpaceLayer);
+        connect(a2, QAction.triggered, setSamplingLayerSlot(,WorkingSpaceLayer));
+
+        menu.exec(_dropperButton.mapToGlobal(pos), nil);
+    }
+
     method: dropperSample (void; Event event)
     {
         State state = data();
@@ -875,11 +973,37 @@ class: AnnotateMinorMode : MinorMode
         if (state.pixelInfo eq nil || state.pixelInfo.empty()) return;
 
         let pinfo  = state.pixelInfo.front(),
-            sName  = sourceNameWithoutFrame(pinfo.name),
-            ip     = state.pointerPosition*devicePixelRatio();
+            sName  = sourceNameWithoutFrame(pinfo.name);
 
-        let pixels = framebufferPixelValue(ip.x, ip.y);
+        vector float[4] pixels;
+        let wsNode = workingSpaceNodeName();
+
+        if (_samplingLayer == WorkingSpaceLayer)
+        {
+            if (wsNode neq nil) pixels = nodePixelValue(state.pointerPosition, wsNode);
+            else pixels = Color(0,0,0,-1); // force fallback
+
+            // If nodePixelValue returned -1 in alpha, it means it couldn't find a texture
+            // for the node. Fallback to source pixels in that case.
+            if (pixels[3] < 0.0)
+            {
+                pixels = sourcePixelValue(sName, pinfo.px, pinfo.py);
+            }
+        }
+        else
+        {
+            let ip = state.pointerPosition * devicePixelRatio();
+            pixels = framebufferPixelValue(ip.x, ip.y);
+        }
+
         let c = Color(pixels[0], pixels[1], pixels[2], pixels[3]);
+
+        // Note: We now have a Paint node at the end of the Display Group (after 
+        // color transforms). This means sampling from DisplayLayer and 
+        // painting back onto the Display Paint node will look exactly the same.
+        // If the user wants to paint linear colors, they should select a 
+        // source-level paint node and use "Working Space Color".
+
         _sampleColor += c;
         _sampleCount++;
         setColor(_sampleColor / float(_sampleCount));
@@ -1381,6 +1505,97 @@ class: AnnotateMinorMode : MinorMode
         _sizeSlider.setValue(int(v * 999.0));
     }
 
+    method: manualColorEntryAccept (void; bool checked)
+    {
+        _manualColorDialog.accept();
+    }
+
+    method: manualColorEntryReject (void; bool checked)
+    {
+        _manualColorDialog.reject();
+    }
+
+    method: manualColorEntry (void; )
+    {
+        _manualColorDialog = QDialog(_colorButton, 0);
+        _manualColorDialog.setWindowTitle("Manual Color Entry");
+        
+        QVBoxLayout layout = QVBoxLayout(_manualColorDialog);
+
+        QHBoxLayout rowR = QHBoxLayout();
+        rowR.addWidget(QLabel("Red:", _manualColorDialog), 0, 0);
+        _rEdit = QLineEdit("%.4f" % _currentDrawMode.color.x, _manualColorDialog);
+        rowR.addWidget(_rEdit, 0, 0);
+        layout.addLayout(rowR, 0);
+
+        QHBoxLayout rowG = QHBoxLayout();
+        rowG.addWidget(QLabel("Green:", _manualColorDialog), 0, 0);
+        _gEdit = QLineEdit("%.4f" % _currentDrawMode.color.y, _manualColorDialog);
+        rowG.addWidget(_gEdit, 0, 0);
+        layout.addLayout(rowG, 0);
+
+        QHBoxLayout rowB = QHBoxLayout();
+        rowB.addWidget(QLabel("Blue:", _manualColorDialog), 0, 0);
+        _bEdit = QLineEdit("%.4f" % _currentDrawMode.color.z, _manualColorDialog);
+        rowB.addWidget(_bEdit, 0, 0);
+        layout.addLayout(rowB, 0);
+
+        QHBoxLayout rowA = QHBoxLayout();
+        rowA.addWidget(QLabel("Alpha:", _manualColorDialog), 0, 0);
+        _aEdit = QLineEdit("%.4f" % _currentDrawMode.color.w, _manualColorDialog);
+        rowA.addWidget(_aEdit, 0, 0);
+        layout.addLayout(rowA, 0);
+
+        QHBoxLayout btns = QHBoxLayout();
+        QPushButton okBtn = QPushButton("OK", _manualColorDialog);
+        QPushButton cancelBtn = QPushButton("Cancel", _manualColorDialog);
+        btns.addWidget(okBtn, 0, 0);
+        btns.addWidget(cancelBtn, 0, 0);
+        layout.addLayout(btns, 0);
+
+        connect(okBtn, QPushButton.clicked, manualColorEntryAccept);
+        connect(cancelBtn, QPushButton.clicked, manualColorEntryReject);
+
+        if (_manualColorDialog.exec() == 1)
+        {
+            try
+            {
+                float r = float(_rEdit.text());
+                float g = float(_gEdit.text());
+                float b = float(_bEdit.text());
+                float a = float(_aEdit.text());
+                setColor(Color(r, g, b, a));
+            }
+            catch (exception exc)
+            {
+                print("Error parsing color: %s\n" % exc);
+            }
+        }
+    }
+
+    method: manualColorEntrySlot (void; bool checked)
+    {
+        manualColorEntry();
+    }
+
+    method: colorContextMenuAtWidget (void; QWidget w, QPoint pos)
+    {
+        QMenu menu = QMenu(w);
+        QAction act = menu.addAction("Manual Color Entry...");
+        connect(act, QAction.triggered, manualColorEntrySlot);
+        menu.exec(w.mapToGlobal(pos), nil);
+    }
+
+    method: colorContextMenu (void; QPoint pos)
+    {
+        colorContextMenuAtWidget(_colorButton, pos);
+    }
+
+    method: precisionContextMenu (void; QPoint pos)
+    {
+        colorContextMenuAtWidget(_precisionLabel, pos);
+    }
+
     method: setColor (void; Color c)
     {
         if (!_setColorLock)
@@ -1392,7 +1607,16 @@ class: AnnotateMinorMode : MinorMode
             let css = "QPushButton { background-color: rgb(%d,%d,%d); }"
                 % (int(c.x * 255), int(c.y * 255), int(c.z * 255));
 
-            if (_colorButton neq nil) _colorButton.setStyleSheet(css);
+            if (_colorButton neq nil)
+            {
+                _colorButton.setStyleSheet(css);
+                _colorButton.setToolTip("R: %.4f\nG: %.4f\nB: %.4f\nA: %.4f" % (c.x, c.y, c.z, c.w));
+            }
+
+            if (_precisionLabel neq nil)
+            {
+                _precisionLabel.setText("R: %.4f\nG: %.4f\nB: %.4f" % (c.x, c.y, c.z));
+            }
 
             if (!_colorDialogLock && _colorDialog neq nil)
             {
@@ -3085,6 +3309,9 @@ class: AnnotateMinorMode : MinorMode
             d.penMode = d;
         }
 
+        _dropperButton.setContextMenuPolicy(Qt.CustomContextMenu);
+        connect(_dropperButton, QWidget.customContextMenuRequested, sampleContextMenu);
+
         //
         //  For when the stylus is flipped over
         //
@@ -3109,6 +3336,18 @@ class: AnnotateMinorMode : MinorMode
         lbox.insertWidget(0, _colorTriangle, 0, 0);
         _colorTriangle.setMaximumHeight(100);
 
+        _precisionLabel = QLabel(m);
+        _precisionLabel.setObjectName("precisionLabel");
+        _precisionLabel.setAlignment(Qt.AlignCenter);
+        _precisionLabel.setTextInteractionFlags(Qt.TextSelectableByMouse);
+        let font = _precisionLabel.font();
+        font.setPointSize(8);
+        _precisionLabel.setFont(font);
+        _precisionLabel.setContextMenuPolicy(Qt.CustomContextMenu);
+        lbox.insertWidget(1, _precisionLabel, 0, 0);
+
+        connect(_precisionLabel, QWidget.customContextMenuRequested, precisionContextMenu);
+
         connect(_colorTriangle, QtColorTriangle.colorChanged, newColorSlot(,false,false));
         connect(_opacitySlider, QAbstractSlider.valueChanged, newOpacitySlot);
         connect(_sizeSlider, QAbstractSlider.valueChanged, newSizeSlot);
@@ -3117,6 +3356,9 @@ class: AnnotateMinorMode : MinorMode
 
         connect(_colorButton, QPushButton.clicked, chooseColorSlot);
         connect(_colorDialog, QColorDialog.colorSelected, newColorSlot(,true,true));
+
+        _colorButton.setContextMenuPolicy(Qt.CustomContextMenu);
+        connect(_colorButton, QWidget.customContextMenuRequested, colorContextMenu);
 
         _undoAct = QAction(auxIcon("undo_64x64.png"), "Undo", m);
         _redoAct = QAction(auxIcon("redo_64x64.png"), "Redo", m);

@@ -1877,6 +1877,29 @@ namespace IPCore
         renderRecursive(context);
     }
 
+    void ImageRenderer::renderPaintRecursive(const IPImage* img, const GLFBO* fbo)
+    {
+        if (img->renderType == IPImage::GroupType)
+        {
+            for (const IPImage* child = img->children; child; child = child->next)
+            {
+                renderPaintRecursive(child, fbo);
+            }
+        }
+        else if (img->renderType == IPImage::ExternalRenderType)
+        {
+            for (const IPImage* child = img->children; child; child = child->next)
+            {
+                renderPaintRecursive(child, fbo);
+            }
+        }
+
+        if (!img->commands.empty())
+        {
+            renderPaint(img, fbo);
+        }
+    }
+
     void ImageRenderer::renderCurrentImage(InternalRenderContext& baseContext, const GLFBO* fbo)
     {
         const IPImage* root = baseContext.image;
@@ -1895,7 +1918,7 @@ namespace IPCore
 
         renderImage(context);
         if (!context.norender)
-            renderPaint(context.image, context.targetFBO);
+            renderPaintRecursive(context.image, context.targetFBO);
     }
 
     void ImageRenderer::renderAllChildren(InternalRenderContext& context)
@@ -3158,6 +3181,7 @@ namespace IPCore
         s.serialNum = image->serialNum;
         s.imageNum = image->imageNum;
         s.textureID = (image->planes.size()) ? image->planes.front().tile->id : 0;
+        s.textureTarget = (image->planes.size()) ? image->planes.front().tile->target : 0;
         s.node = image->node;
         s.tagMap = image->tagMap;
         s.index = img->fb ? img->fbHash() : img->renderIDHash();
@@ -4852,7 +4876,6 @@ namespace IPCore
 
         if (root->commands.empty())
             return;
-
         const string prenderID = imageToFBOIdentifier(root);
 
         assert(fbo);

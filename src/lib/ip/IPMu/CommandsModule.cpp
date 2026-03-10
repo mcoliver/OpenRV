@@ -28,6 +28,8 @@
 #include <IPCore/PropertyEditor.h>
 #include <IPCore/Session.h>
 #include <IPCore/RenderQuery.h>
+#include <TwkGLF/GL.h>
+#include <TwkGLF/GLFBO.h>
 #include <Mu/ClassInstance.h>
 #include <Mu/Exception.h>
 #include <Mu/Function.h>
@@ -1758,6 +1760,90 @@ namespace IPMu
         NODE_RETURN(mp);
     }
 
+    NODE_IMPLEMENTATION(nodePixelValue, Mu::Vector4f)
+    {
+        Process* p = NODE_THREAD.process();
+        MuLangContext* c = static_cast<MuLangContext*>(p->context());
+        Session* s = Session::currentSession();
+        Vector2f inp = NODE_ARG(0, Vector2f);
+        StringType::String* nodeName = NODE_ARG_OBJECT(1, StringType::String);
+
+        Mu::Vector4f v;
+        v[0] = 0.0f;
+        v[1] = 0.0f;
+        v[2] = 0.0f;
+        v[3] = -1.0f;
+
+        if (!s || !s->renderer() || !nodeName || !s->renderer()->currentDevice())
+            NODE_RETURN(v);
+
+        // Map inp to NDC space [-1, 1]
+        Box2f vp = s->renderer()->viewport() / s->renderer()->currentDevice()->devicePixelRatio();
+        if (vp.size().x <= 1.0 || vp.size().y <= 1.0)
+            NODE_RETURN(v);
+
+        float x = (inp[0] - vp.min.x) / (vp.size().x - 1.0) * 2.0 - 1.0;
+        float y = (inp[1] - vp.min.y) / (vp.size().y - 1.0) * 2.0 - 1.0;
+
+        if (s->renderer()->GLContextNotSet())
+            NODE_RETURN(v);
+
+        const ImageRenderer::RenderedImagesVector* images = s->renderer()->renderedImages();
+        if (!images)
+            NODE_RETURN(v);
+
+        PixelImageVector pixelImages;
+        pixelImages.resize(images->size());
+        computePixelImages(x, y, const_cast<ImageRenderer::RenderedImagesVector&>(*images), pixelImages);
+
+        for (size_t i = 0; i < images->size(); i++)
+        {
+            const ImageRenderer::RenderedImage& image = (*images)[i];
+            if (image.node && image.node->name() == nodeName->c_str())
+            {
+                if (image.textureID != 0 && image.textureTarget != 0)
+                {
+                    const PixelImage& ps = pixelImages[i];
+                    // ps.px and ps.py are pixel coordinates within the uncropped image.
+                    // But we need texture coordinates. glReadPixels from an FBO
+                    // attached to a texture uses coordinates relative to the texture's origin.
+
+                    // computePixelImages gives ps.px/py as coordinates in the uncropped buffer.
+                    // We need to adjust by uncropX/uncropY to get coordinates in the actual texture.
+                    int ix = (int)(ps.px - image.uncropX + 0.5f);
+                    int iy = (int)(ps.py - image.uncropY + 0.5f);
+
+                    if (ix < 0 || iy < 0 || ix >= image.width || iy >= image.height)
+                        continue;
+
+                    // We need to bind the texture to an FBO to read it.
+                    GLuint fbo;
+                    glGenFramebuffers(1, &fbo);
+                    GLint oldFBO;
+                    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &oldFBO);
+                    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+                    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, image.textureTarget, image.textureID, 0);
+
+                    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
+                    {
+                        float pval[4];
+                        glReadPixels(ix, iy, 1, 1, GL_RGBA, GL_FLOAT, pval);
+                        v[0] = pval[0];
+                        v[1] = pval[1];
+                        v[2] = pval[2];
+                        v[3] = pval[3];
+                    }
+
+                    glBindFramebuffer(GL_FRAMEBUFFER, oldFBO);
+                    glDeleteFramebuffers(1, &fbo);
+                    NODE_RETURN(v);
+                }
+            }
+        }
+        NODE_RETURN(v);
+    }
+
     NODE_IMPLEMENTATION(imagesAtPixel, Pointer)
     {
         Process* p = NODE_THREAD.process();
@@ -1854,6 +1940,7 @@ namespace IPMu
             int serialNum;
             int imageNum;
             int textureID;
+            int textureTarget;
             float initPixelAspect;
         };
 
@@ -1923,6 +2010,7 @@ namespace IPMu
             tt->serialNum = image.serialNum;
             tt->imageNum = image.imageNum;
             tt->textureID = image.textureID;
+            tt->textureTarget = image.textureTarget;
             tt->initPixelAspect = image.initPixelAspect;
 
             array->element<ClassInstance*>(i) = o;
@@ -2008,6 +2096,7 @@ namespace IPMu
             int serialNum;
             int imageNum;
             int textureID;
+            int textureTarget;
         };
 
         for (int i = 0; i < sarray.size(); i++)
@@ -2076,6 +2165,7 @@ namespace IPMu
             tt->serialNum = ps.serialNum;
             tt->imageNum = ps.imageNum;
             tt->textureID = ps.textureID;
+            tt->textureTarget = ps.textureTarget;
 
             array->element<ClassInstance*>(i) = o;
         }
@@ -4220,6 +4310,20 @@ namespace IPMu
         NODE_RETURN(Pointer(0));
     }
 
+    NODE_IMPLEMENTATION(rootNode, Pointer)
+    {
+        Session* s = Session::currentSession();
+        Process* p = NODE_THREAD.process();
+        MuLangContext* c = static_cast<MuLangContext*>(p->context());
+
+        if (IPNode* node = s->graph().root())
+        {
+            NODE_RETURN(c->stringType()->allocate(node->name()));
+        }
+
+        NODE_RETURN(Pointer(0));
+    }
+
     NODE_IMPLEMENTATION(nodeGroupRoot, Pointer)
     {
         Session* s = Session::currentSession();
@@ -5293,7 +5397,8 @@ namespace IPMu
         fields[19] = make_pair(string("serialNumber"), context->intType());
         fields[20] = make_pair(string("imageNum"), context->intType());
         fields[21] = make_pair(string("textureID"), context->intType());
-        fields[22] = make_pair(string("initPixelAspect"), context->floatType());
+        fields[22] = make_pair(string("textureTarget"), context->intType());
+        fields[23] = make_pair(string("initPixelAspect"), context->floatType());
         context->arrayType(context->structType(0, "PixelImageInfo", fields), 1, 0);
 
         fields.resize(15);
@@ -5368,6 +5473,7 @@ namespace IPMu
         fields[23] = make_pair(string("serialNumber"), context->intType());
         fields[24] = make_pair(string("imageNum"), context->intType());
         fields[25] = make_pair(string("textureID"), context->intType());
+        fields[26] = make_pair(string("textureTarget"), context->intType());
         context->arrayType(context->structType(0, "RenderedImageInfo", fields), 1, 0);
 
         fields.resize(6);
@@ -5697,6 +5803,9 @@ namespace IPMu
             new Function(c, "ndcToEventSpace", ndc2event, None, Return, "vector float[2]", Parameters,
                          new Param(c, "point", "vector float[2]"), End),
 
+            new Function(c, "nodePixelValue", nodePixelValue, None, Return, "vector float[4]", Parameters,
+                         new Param(c, "point", "vector float[2]"), new Param(c, "node", "string"), End),
+
             new Function(c, "imagesAtPixel", imagesAtPixel, None, Return, "PixelImageInfo[]", Parameters,
                          new Param(c, "point", "vector float[2]"), new Param(c, "tag", "string", Value(Pointer(0))),
                          new Param(c, "sourcesOnly", "bool", Value(false)), End),
@@ -5885,6 +5994,8 @@ namespace IPMu
             new Function(c, "setViewNode", setViewNode, None, Return, "void", Parameters, new Param(c, "nodeName", "string"), End),
 
             new Function(c, "viewNodes", viewNodes, None, Return, "string[]", End),
+
+            new Function(c, "rootNode", rootNode, None, Return, "string", End),
 
             new Function(c, "viewNode", viewNode, None, Return, "string", End),
 
