@@ -4846,7 +4846,7 @@ namespace IPCore
 
     void ImageRenderer::renderPaint(const IPImage* root, const GLFBO* fbo)
     {
-        if (!root || !root->node || !fbo)
+        if (!root || !root->node || !fbo || !m_glState)
             return;
 
         //
@@ -4941,8 +4941,14 @@ namespace IPCore
         }
 
         // Allocate temp FBOs AFTER cache lookup so the cached FBO is protected from being reused
-        const GLFBO* tempfbo1 = m_imageFBOManager.newImageFBO(fbo, m_fullRenderSerialNumber, prenderID)->fbo();
-        const GLFBO* tempfbo2 = m_imageFBOManager.newImageFBO(fbo, m_fullRenderSerialNumber, prenderID)->fbo();
+        ImageFBO* tfbo1 = m_imageFBOManager.newImageFBO(fbo, m_fullRenderSerialNumber, prenderID);
+        ImageFBO* tfbo2 = m_imageFBOManager.newImageFBO(fbo, m_fullRenderSerialNumber, prenderID);
+
+        if (!tfbo1 || !tfbo2)
+            return;
+
+        const GLFBO* tempfbo1 = tfbo1->fbo();
+        const GLFBO* tempfbo2 = tfbo2->fbo();
 
         // Copy initial render to temp buffer
         if (root->commands.size() > 1)
@@ -4975,7 +4981,7 @@ namespace IPCore
         ///////////////////////////stencil//////////////////////////////////////
         bool hasStencil = !root->stencilBox.isEmpty();
         Vec4f stencil = Vec4f(0.0f, 0.0f, 1.0f, 1.0f);
-        if (hasStencil)
+        if (hasStencil && root->fb)
         {
             FrameBuffer* fb = root->fb;
             const float pa = fb->pixelAspectRatio();

@@ -271,15 +271,14 @@ namespace IPCore
         class Text : public Command
         {
         public:
-            explicit Text(const std::string& /*str*/ = "", const std::string& /*fnt*/ = "", float ptsze = 1.0,
-                          Color color = Color(1, 1, 1, 1))
+            explicit Text(const std::string& /*str*/ = "", const std::string& /*fnt*/ = "", float ptsze = 1.0, Color c = Color(1, 1, 1, 1))
                 : ptsize(ptsze)
                 , scale(1.0)
                 , rotation(0.0)
                 , spacing(1.0)
                 , pos(0, 0)
             {
-                color = color;
+                color = c;
             }
 
             Text(const Text& text) = default;
@@ -322,12 +321,12 @@ namespace IPCore
         class Rectangle : public Command
         {
         public:
-            explicit Rectangle(float height = 0, float width = 0, Color color = Color(0, 0, 0, 1.0))
+            explicit Rectangle(float height = 0, float width = 0, Color c = Color(0, 0, 0, 1.0))
                 : height(height)
                 , width(width)
                 , pos(0, 0)
             {
-                color = color;
+                color = c;
             }
 
             Rectangle(const Rectangle& rectangle) = default;
