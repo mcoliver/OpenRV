@@ -2375,9 +2375,13 @@ namespace IPCore
     void ImageRenderer::renderExternal(InternalRenderContext& context)
     {
         const IPImage* image = context.image;
+        const GLFBO* fbo = context.targetFBO;
+
+        if (!image || !fbo)
+            return;
+
         const VideoDevice* device = context.device;
         const bool controller = device == m_controlDevice.device;
-        const GLFBO* fbo = context.targetFBO;
         const AuxRender* auxRender = context.auxRenderer;
         IPImage::RenderDestination dest = image->destination;
         const bool left = dest == IPImage::MainBuffer || dest == IPImage::LeftBuffer;
@@ -2417,7 +2421,11 @@ namespace IPCore
 
         const VideoDevice* device = context.device;
         const bool controller = device == m_controlDevice.device;
-        const GLFBO* fbo = context.targetFBO ? context.targetFBO : m_controlDevice.glDevice->defaultFBO();
+        const GLFBO* fbo =
+            context.targetFBO ? context.targetFBO : (m_controlDevice.glDevice ? m_controlDevice.glDevice->defaultFBO() : NULL);
+
+        if (!fbo)
+            return;
         const AuxRender* auxRender = context.auxRenderer;
         IPImage::RenderDestination dest = context.image->destination;
         const bool left = dest == IPImage::MainBuffer || dest == IPImage::LeftBuffer;
