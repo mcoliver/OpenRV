@@ -1893,7 +1893,7 @@ namespace IPCore
             }
         }
 
-        if (!img->commands.empty())
+        if (!img->commands.empty() && img->node)
         {
             renderPaint(img, fbo);
         }
@@ -4840,7 +4840,7 @@ namespace IPCore
 
     void ImageRenderer::renderPaint(const IPImage* root, const GLFBO* fbo)
     {
-        if (!root)
+        if (!root || !root->node)
             return;
 
         //
