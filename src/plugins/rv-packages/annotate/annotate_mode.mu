@@ -164,11 +164,11 @@ class: AnnotateMinorMode : MinorMode
     QWidget           _managePane;
     QWidget           _drawPane;
 
-    DisplayLayer      := 0;
-    WorkingSpaceLayer := 1;
-    int               _samplingLayer;
+    DisplayLayer := 0;
+    SourceLayer  := 1;
+    int _samplingLayer;
 
-    bool              _syncWholeStrokes;
+    bool _syncWholeStrokes;
     bool              _syncAutoStart;
     bool              _showBrush;
     bool              _scaleBrush;
@@ -898,48 +898,6 @@ class: AnnotateMinorMode : MinorMode
         push(event);
     }
 
-    method: workingSpaceNodeName (string;)
-    {
-        string node = nil;
-
-        // Try to find the OCIODisplay node
-        let ocioNodes = nodesOfType("OCIODisplay");
-        if (!ocioNodes.empty()) node = ocioNodes.front();
-
-        // Fallback to RVDisplayColor node
-        if (node eq nil)
-        {
-            let displayColorNodes = nodesOfType("RVDisplayColor");
-            if (!displayColorNodes.empty()) node = displayColorNodes.front();
-        }
-
-        if (node neq nil)
-        {
-            // We have a display node. We want the node BEFORE color adjustments.
-            // Walk back through RVDisplayColor and RVColor nodes.
-            
-            while (node neq nil)
-            {
-                let type = nodeType(node);
-                if (type == "OCIODisplay" || type == "RVDisplayColor" || type == "RVColor")
-                {
-                    let inOut = nodeConnections(node);
-                    let ins = inOut._0;
-                    if (!ins.empty()) node = ins.front();
-                    else break;
-                }
-                else
-                {
-                    // Found a node that is not a known color adjustment node.
-                    return node;
-                }
-            }
-            return node;
-        }
-        
-        return nil;
-    }
-
     method: setSamplingLayerSlot (void; bool checked, int layer)
     {
         _samplingLayer = layer;
@@ -958,10 +916,10 @@ class: AnnotateMinorMode : MinorMode
         a1.setChecked(_samplingLayer == DisplayLayer);
         connect(a1, QAction.triggered, setSamplingLayerSlot(,DisplayLayer));
 
-        QAction a2 = menu.addAction("Working Space Color");
+        QAction a2 = menu.addAction("Source Color");
         a2.setCheckable(true);
-        a2.setChecked(_samplingLayer == WorkingSpaceLayer);
-        connect(a2, QAction.triggered, setSamplingLayerSlot(,WorkingSpaceLayer));
+        a2.setChecked(_samplingLayer == SourceLayer);
+        connect(a2, QAction.triggered, setSamplingLayerSlot(,SourceLayer));
 
         menu.exec(_dropperButton.mapToGlobal(pos), nil);
     }
@@ -976,19 +934,10 @@ class: AnnotateMinorMode : MinorMode
             sName  = sourceNameWithoutFrame(pinfo.name);
 
         vector float[4] pixels;
-        let wsNode = workingSpaceNodeName();
 
-        if (_samplingLayer == WorkingSpaceLayer)
+        if (_samplingLayer == SourceLayer)
         {
-            if (wsNode neq nil) pixels = nodePixelValue(state.pointerPosition, wsNode);
-            else pixels = Color(0,0,0,-1); // force fallback
-
-            // If nodePixelValue returned -1 in alpha, it means it couldn't find a texture
-            // for the node. Fallback to source pixels in that case.
-            if (pixels[3] < 0.0)
-            {
-                pixels = sourcePixelValue(sName, pinfo.px, pinfo.py);
-            }
+            pixels = sourcePixelValue(sName, pinfo.px, pinfo.py);
         }
         else
         {
@@ -1001,8 +950,8 @@ class: AnnotateMinorMode : MinorMode
         // Note: We now have a Paint node at the end of the Display Group (after 
         // color transforms). This means sampling from DisplayLayer and 
         // painting back onto the Display Paint node will look exactly the same.
-        // If the user wants to paint linear colors, they should select a 
-        // source-level paint node and use "Working Space Color".
+        // If the user wants to paint source colors, they should select a 
+        // source-level paint node and use "Source Color".
 
         _sampleColor += c;
         _sampleCount++;
