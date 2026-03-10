@@ -2410,6 +2410,9 @@ namespace IPCore
             FFP.setViewport(0, 0, fbo->width(), fbo->height());
             auxRender->render(VideoDevice::IndependentDisplayMode, left, right, controller, !controller);
             m_rootContext = 0;
+
+            if (!context.norender)
+                renderPaintRecursive(image, fbo);
         }
     }
 
@@ -2489,6 +2492,9 @@ namespace IPCore
         }
 
         renderAllChildren(context);
+
+        if (!context.norender)
+            renderPaintRecursive(context.image, fbo);
 
         if (controller && (dest == IPImage::LeftBuffer || dest == IPImage::RightBuffer))
         {
