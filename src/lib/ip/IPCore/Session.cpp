@@ -5987,9 +5987,12 @@ namespace IPCore
             const IPGraph::DisplayGroups& dgroups = graph().displayGroups();
             for (size_t i = 0; i < dgroups.size(); i++)
             {
-                if (PaintIPNode* p = dgroups[i]->paintNode())
+                if (DisplayGroupIPNode* dg = dgroups[i])
                 {
-                    writeNodes.insert(p);
+                    if (PaintIPNode* p = dg->paintNode())
+                    {
+                        writeNodes.insert(p);
+                    }
                 }
             }
         }
