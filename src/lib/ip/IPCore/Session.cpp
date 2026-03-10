@@ -5,6 +5,7 @@
 //  SPDX-License-Identifier: Apache-2.0
 //
 //
+#include <IPBaseNodes/PaintIPNode.h>
 #include <IPCore/Application.h>
 #include <IPCore/AudioRenderer.h>
 #include <IPCore/ImageRenderer.h>
