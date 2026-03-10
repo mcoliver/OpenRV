@@ -1879,6 +1879,9 @@ namespace IPCore
 
     void ImageRenderer::renderPaintRecursive(const IPImage* img, const GLFBO* fbo)
     {
+        if (!img)
+            return;
+
         if (!img->hasPaintRecursive && img->commands.empty())
             return;
 
@@ -4837,6 +4840,9 @@ namespace IPCore
 
     void ImageRenderer::renderPaint(const IPImage* root, const GLFBO* fbo)
     {
+        if (!root)
+            return;
+
         //
         // if this image has overlay commands, such as matts, these commands
         // will be rendered first and they are considered part of the actual
