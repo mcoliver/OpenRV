@@ -202,10 +202,10 @@ module: export_utils
         ranges;
     }
 
-    \: exportImageSequence (ExternalProcess; 
+    \: exportImageSequenceOverRange (ExternalProcess; 
                             int start,
                             int end,
-                            string prefix="out",
+                            string prefix="",
                             string imagetype="tif",
                             bool blocking=false,
                             string conversion="default")
