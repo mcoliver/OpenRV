@@ -83,8 +83,10 @@ module: export_utils
                 let dnodes  = nodesOfType("RVDisplayGroup"),
                     dstereo = nodesInGroupOfType(dnodes.front(), "RVDisplayStereo"),
                     dpipes  = nodesInGroupOfType(dnodes.front(), "RVDisplayPipelineGroup"),
+                    dpaints = nodesInGroupOfType(dnodes.front(), "RVPaint"),
                     opipes  = nodesInGroupOfType("defaultOutputGroup", "RVDisplayPipelineGroup"),
-                    ostereo = nodesInGroupOfType("defaultOutputGroup", "RVDisplayStereo");
+                    ostereo = nodesInGroupOfType("defaultOutputGroup", "RVDisplayStereo"),
+                    opaints = nodesInGroupOfType("defaultOutputGroup", "RVPaint");
 
                 //
                 //  Copy display properties and nodes to output
@@ -95,6 +97,14 @@ module: export_utils
                 stereoProf = tempSessionName("profile");
                 writeProfile(stereoProf, dstereo.front());
                 readProfile(stereoProf, ostereo.front(), false);
+
+                if (!dpaints.empty() && !opaints.empty())
+                {
+                    let paintProf = tempSessionName("profile");
+                    writeProfile(paintProf, dpaints.front());
+                    readProfile(paintProf, opaints.front(), false);
+                    removeSession(paintProf)();
+                }
 
                 removeSession(colorProf)();
                 removeSession(stereoProf)();
@@ -192,13 +202,13 @@ module: export_utils
         ranges;
     }
 
-    \: exportImageSequenceOverRange (ExternalProcess; 
-                                     int start,
-                                     int end,
-                                     string prefix="",
-                                     string imagetype="tif",
-                                     bool blocking=false,
-                                     string conversion="default")
+    \: exportImageSequence (ExternalProcess; 
+                            int start,
+                            int end,
+                            string prefix="out",
+                            string imagetype="tif",
+                            bool blocking=false,
+                            string conversion="default")
     {
         let name = "%s.#" % prefix,
             temp = makeTempSession(conversion);
@@ -206,9 +216,11 @@ module: export_utils
         string[] args = 
         { 
             temp,
+            "-view", "defaultOutputGroup",
             "-o", "%s.%s" % (name, imagetype),
             "-t", "%d-%d" % (start, end)
         };
+
         
         if (blocking)
         {
@@ -233,6 +245,7 @@ module: export_utils
         string[] args =
         {
             temp,
+            "-view", "defaultOutputGroup",
             "-o", name,
             "-t",  "%d-%d" % (start, end) 
         };
@@ -266,6 +279,7 @@ module: export_utils
         string[] args =
         {
             temp,
+            "-view", "defaultOutputGroup",
             "-o", filepat,
             "-t", string(timestr)
         };
