@@ -72,6 +72,10 @@ namespace IPCore
 
         void incrementRenderHashCount();
 
+    protected:
+        PipelineGroupIPNode* m_displayPipelineNode;
+        PaintIPNode* m_paintNode;
+
     private:
         void initNewContext(const Context&, Context&) const;
 
@@ -81,8 +85,6 @@ namespace IPCore
         AdaptorIPNode* m_adaptor;
         ResizeIPNode* m_resizeNode;
         DisplayStereoIPNode* m_stereoNode;
-        PipelineGroupIPNode* m_displayPipelineNode;
-        PaintIPNode* m_paintNode;
         StringProperty* m_deviceName;
         StringProperty* m_moduleName;
         StringProperty* m_systemProfileURL;
