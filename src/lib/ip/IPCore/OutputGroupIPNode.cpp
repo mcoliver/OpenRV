@@ -30,7 +30,7 @@ namespace IPCore
         // Ensure this paint node is saved to the session file
         m_paintNode->declareProperty<IntProperty>("defaults.persistent", 1);
 
-        setRoot(m_paintNode);
+        setRoot(m_displayPipelineNode);
     }
 
     OutputGroupIPNode::~OutputGroupIPNode() {}

@@ -92,7 +92,7 @@ namespace IPCore
         // Ensure this paint node is saved to the session file
         m_paintNode->declareProperty<IntProperty>("defaults.persistent", 1);
 
-        setRoot(m_paintNode);
+        setRoot(m_displayPipelineNode);
     }
 
     DisplayGroupIPNode::~DisplayGroupIPNode()
@@ -206,7 +206,7 @@ namespace IPCore
             try
             {
                 newContext.eye = 0;
-                left = m_root->evaluate(newContext);
+                left = m_paintNode->evaluate(newContext);
                 if (left)
                 {
                     left->useBackground = true;
@@ -219,7 +219,7 @@ namespace IPCore
                 }
 
                 newContext2.eye = 1;
-                right = m_root->evaluate(newContext2);
+                right = m_paintNode->evaluate(newContext2);
                 if (right)
                 {
                     right->useBackground = true;
@@ -303,7 +303,7 @@ namespace IPCore
 
             try
             {
-                IPImage* image = m_root->evaluate(newContext);
+                IPImage* image = m_paintNode->evaluate(newContext);
 
                 if (image)
                 {
@@ -320,7 +320,6 @@ namespace IPCore
                     intermediate->shaderExpr = Shader::newSourceRGBA(intermediate);
                     image = intermediate;
                 }
-
                 IPImage* eimage = new IPImage(this, imageDevice(), IPImage::ExternalRenderType, IPImage::CurrentFrameBuffer,
                                               IPImage::Rect2DSampler, false);
 
@@ -430,16 +429,16 @@ namespace IPCore
             {
                 //  Evaluate left Eye
                 newContext.eye = 0;
-                if (visitor.traverseChild(newContext, 0, this, m_root))
+                if (visitor.traverseChild(newContext, 0, this, m_paintNode))
                 {
-                    m_root->metaEvaluate(newContext, visitor);
+                    m_paintNode->metaEvaluate(newContext, visitor);
                 }
 
                 //  Evaluate right Eye
                 newContext.eye = 1;
-                if (visitor.traverseChild(newContext, 1, this, m_root))
+                if (visitor.traverseChild(newContext, 1, this, m_paintNode))
                 {
-                    m_root->metaEvaluate(newContext, visitor);
+                    m_paintNode->metaEvaluate(newContext, visitor);
                 }
 
                 visitor.leave(context, this);
@@ -452,9 +451,9 @@ namespace IPCore
             return;
         }
 
-        if (visitor.traverseChild(newContext, 0, this, m_root))
+        if (visitor.traverseChild(newContext, 0, this, m_paintNode))
         {
-            m_root->metaEvaluate(newContext, visitor);
+            m_paintNode->metaEvaluate(newContext, visitor);
         }
 
         visitor.leave(context, this);
