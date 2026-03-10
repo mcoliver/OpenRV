@@ -459,11 +459,6 @@ namespace IPCore
         visitor.leave(context, this);
     }
 
-    IPNode::ImageRangeInfo DisplayGroupIPNode::imageRangeInfo() const
-    {
-        return m_paintNode ? m_paintNode->imageRangeInfo() : GroupIPNode::imageRangeInfo();
-    }
-
     IPNode::ImageStructureInfo DisplayGroupIPNode::imageStructureInfo(const Context& context) const
     {
         Context newContext = context;

@@ -274,6 +274,8 @@ namespace IPCore
 
         if (!nodes.empty())
         {
+            if (nodes.front() == this)
+                return ImageRangeInfo();
             ImageRangeInfo i = nodes.front()->imageRangeInfo();
 
             if (i.inc == 0)
