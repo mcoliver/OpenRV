@@ -311,15 +311,23 @@ class: AnnotateMinorMode : MinorMode
                 {
                     // Preference: if there is a paint node in a display group, 
                     // and we are NOT storing on source, pick that one first.
-                    // Otherwise pick the first one.
+                    // Priority is given to the paint node in the CURRENT view group.
                     
                     MetaEvalInfo best = infos.front();
+                    let vnode = viewNode();
+                    let vgroup = if vnode neq nil then nodeGroup(vnode) else nil;
+
                     for_each (i; infos)
                     {
                         if (regex.match("displayGroup.*", i.node))
                         {
-                            best = i;
-                            break;
+                            if (vgroup neq nil && nodeGroup(i.node) == vgroup)
+                            {
+                                best = i;
+                                break;
+                            }
+                            // Fallback to first displayGroup found if not in current view group
+                            if (!regex.match("displayGroup.*", best.node)) best = i;
                         }
                     }
                     
