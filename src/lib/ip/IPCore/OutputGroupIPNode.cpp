@@ -5,7 +5,9 @@
 //  SPDX-License-Identifier: Apache-2.0
 //
 //
+#include <IPBaseNodes/PaintIPNode.h>
 #include <IPCore/OutputGroupIPNode.h>
+#include <IPCore/PipelineGroupIPNode.h>
 
 namespace IPCore
 {
@@ -21,6 +23,14 @@ namespace IPCore
         m_height = declareProperty<IntProperty>("output.height", 0);
         m_dataType = declareProperty<StringProperty>("output.dataType", "uint8");
         m_pixelAspect = declareProperty<FloatProperty>("output.pixelAspect", 1.0f);
+
+        m_paintNode = newMemberNodeOfType<PaintIPNode>("RVPaint", "paint");
+        m_paintNode->setInputs1(displayPipelineNode());
+        m_paintNode->declareProperty<StringProperty>("tag.annotate", "true");
+        // Ensure this paint node is saved to the session file
+        m_paintNode->declareProperty<IntProperty>("defaults.persistent", 1);
+
+        setRoot(m_paintNode);
     }
 
     OutputGroupIPNode::~OutputGroupIPNode() {}
