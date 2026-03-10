@@ -1879,14 +1879,10 @@ namespace IPCore
 
     void ImageRenderer::renderPaintRecursive(const IPImage* img, const GLFBO* fbo)
     {
-        if (img->renderType == IPImage::GroupType)
-        {
-            for (const IPImage* child = img->children; child; child = child->next)
-            {
-                renderPaintRecursive(child, fbo);
-            }
-        }
-        else if (img->renderType == IPImage::ExternalRenderType)
+        if (!img->hasPaintRecursive && img->commands.empty())
+            return;
+
+        if (img->renderType == IPImage::GroupType || img->renderType == IPImage::ExternalRenderType)
         {
             for (const IPImage* child = img->children; child; child = child->next)
             {

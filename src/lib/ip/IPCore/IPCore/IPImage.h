@@ -424,6 +424,7 @@ namespace IPCore
         bool invalid : 1;       // image represents an out-of-range image
         bool useBackground : 1; // draws background for this image
         bool isHistogram : 1;
+        bool hasPaintRecursive : 1;
 
         size_t hashCount;
 

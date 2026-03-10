@@ -67,6 +67,7 @@ namespace IPCore
         samplerType = Rect2DSampler;
         hashCount = 0;
         isHistogram = false;
+        hasPaintRecursive = false;
         isCropped = false;
         cropStartX = 0;
         cropStartY = 0;
@@ -424,14 +425,21 @@ namespace IPCore
 
     void IPImage::append(IPImage* img)
     {
+        if (img->hasPaintRecursive)
+            hasPaintRecursive = true;
         IPImage* i;
         for (i = this; i->next; i = i->next)
-            ;
+        {
+            if (img->hasPaintRecursive)
+                i->hasPaintRecursive = true;
+        }
         i->next = img;
     }
 
     void IPImage::appendChild(IPImage* img)
     {
+        if (img->hasPaintRecursive)
+            hasPaintRecursive = true;
         if (children)
             children->append(img);
         else
