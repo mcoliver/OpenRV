@@ -375,10 +375,10 @@ namespace IPCore
             try
             {
                 newContext.eye = 0;
-                images.push_back(m_root->evaluateIdentifier(newContext));
+                images.push_back(m_paintNode->evaluateIdentifier(newContext));
 
                 newContext.eye = 1;
-                images.push_back(m_root->evaluateIdentifier(newContext));
+                images.push_back(m_paintNode->evaluateIdentifier(newContext));
             }
             catch (...)
             {
@@ -394,7 +394,7 @@ namespace IPCore
         {
             try
             {
-                IPImageID* image = m_root->evaluateIdentifier(newContext);
+                IPImageID* image = m_paintNode->evaluateIdentifier(newContext);
 
                 root = new IPImageID();
                 root->appendChild(image);
@@ -457,6 +457,11 @@ namespace IPCore
         }
 
         visitor.leave(context, this);
+    }
+
+    IPNode::ImageRangeInfo DisplayGroupIPNode::imageRangeInfo() const
+    {
+        return m_paintNode ? m_paintNode->imageRangeInfo() : GroupIPNode::imageRangeInfo();
     }
 
     IPNode::ImageStructureInfo DisplayGroupIPNode::imageStructureInfo(const Context& context) const

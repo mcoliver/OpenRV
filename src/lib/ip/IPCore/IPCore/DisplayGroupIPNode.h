@@ -47,6 +47,7 @@ namespace IPCore
         virtual IPImage* evaluate(const Context&);
         virtual IPImageID* evaluateIdentifier(const Context& context);
         virtual void metaEvaluate(const Context&, MetaEvalVisitor&);
+        virtual ImageRangeInfo imageRangeInfo() const;
         virtual ImageStructureInfo imageStructureInfo(const Context&) const;
         virtual void mediaInfo(const Context&, MediaInfoVector&) const;
 
