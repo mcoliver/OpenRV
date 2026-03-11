@@ -1054,7 +1054,7 @@ Locate the input in the eval path at frame starting at node and return its ui na
 
 \: sequenceBoundaries (int[]; string node = nil)
 {
-    if (node eq nil) node = viewNode();
+    if (node eq nil) node = rootNode();
     mapPropertyToGlobalFrames("edl.frame", 1, node);
 }
 
@@ -1067,7 +1067,7 @@ frames may appear more than once.
 \: findAnnotatedFrames (int[]; string node = nil)
 {
     string[] tempProps;
-    let seqb = sequenceBoundaries();
+    let seqb = sequenceBoundaries(node);
     let testFrames = if seqb.empty() then int[](frameStart()) else seqb;
     if (node eq nil) node = rootNode();
 
@@ -1108,7 +1108,7 @@ frames may appear more than once.
         }
     }
 
-    let frames = mapPropertyToGlobalFrames("find.frames", 1);
+    let frames = mapPropertyToGlobalFrames("find.frames", 1, rootNode());
     for_each (p; tempProps) if (propertyExists(p)) deleteProperty(p);
     return frames;
 }
