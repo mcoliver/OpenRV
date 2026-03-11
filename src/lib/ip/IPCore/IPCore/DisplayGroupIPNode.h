@@ -19,7 +19,6 @@ namespace IPCore
 {
     class AdaptorIPNode;
     class DisplayStereoIPNode;
-    class PaintIPNode;
     class PipelineGroupIPNode;
     class ResizeIPNode;
 
@@ -68,8 +67,6 @@ namespace IPCore
 
         PipelineGroupIPNode* displayPipelineNode() const { return m_displayPipelineNode; }
 
-        PaintIPNode* paintNode() const { return m_paintNode; }
-
         void incrementRenderHashCount();
 
     protected:
@@ -85,6 +82,7 @@ namespace IPCore
         AdaptorIPNode* m_adaptor;
         ResizeIPNode* m_resizeNode;
         DisplayStereoIPNode* m_stereoNode;
+        PipelineGroupIPNode* m_displayPipelineNode;
         StringProperty* m_deviceName;
         StringProperty* m_moduleName;
         StringProperty* m_systemProfileURL;

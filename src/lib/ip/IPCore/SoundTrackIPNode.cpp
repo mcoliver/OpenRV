@@ -270,25 +270,30 @@ namespace IPCore
 
     IPNode::ImageRangeInfo SoundTrackIPNode::imageRangeInfo() const
     {
+        static thread_local int depth = 0;
+        if (depth > 50)
+            return ImageRangeInfo();
+        depth++;
+
         IPNodes nodes = inputs();
 
         if (!nodes.empty())
         {
-            if (nodes.front() == this)
-                return ImageRangeInfo();
             ImageRangeInfo i = nodes.front()->imageRangeInfo();
 
             if (i.inc == 0)
             {
                 if (nodes.size() == 2)
                 {
-                    return nodes[1]->imageRangeInfo();
+                    i = nodes[1]->imageRangeInfo();
                 }
             }
 
+            depth--;
             return i;
         }
 
+        depth--;
         return ImageRangeInfo();
     }
 

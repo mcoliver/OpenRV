@@ -320,6 +320,7 @@ namespace IPCore
                     intermediate->shaderExpr = Shader::newSourceRGBA(intermediate);
                     image = intermediate;
                 }
+
                 IPImage* eimage = new IPImage(this, imageDevice(), IPImage::ExternalRenderType, IPImage::CurrentFrameBuffer,
                                               IPImage::Rect2DSampler, false);
 

@@ -5,9 +5,7 @@
 //  SPDX-License-Identifier: Apache-2.0
 //
 //
-#include <IPBaseNodes/PaintIPNode.h>
 #include <IPCore/OutputGroupIPNode.h>
-#include <IPCore/PipelineGroupIPNode.h>
 
 namespace IPCore
 {
