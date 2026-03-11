@@ -1067,37 +1067,66 @@ frames may appear more than once.
 \: findAnnotatedFrames (int[]; string node = nil)
 {
     string[] tempProps;
-    if (node eq nil) node = rootNode();
+    int[] allFrames;
 
     // Directly find all RVPaint nodes in the session
     for_each (name; nodesOfType("RVPaint"))
     {
-        let tprop = "%s.find.frames" % name;
+        int[] nodeFrames;
 
-        if (!propertyExists(tprop))
+        for_each (p; properties(name))
         {
-            int[] nodeFrames;
+            // Use regex.smatch to get the captured groups (returns string[] or nil)
+            // this handles node names with dots correctly.
+            let m = regex.smatch("(.*)\\.frame:([0-9]+)\\.order$", p);
 
-            for_each (p; properties(name))
+            if (m neq nil)
             {
-                // Use regex.smatch to get the captured groups (returns string[] or nil)
-                // this handles node names with dots correctly.
-                let m = regex.smatch("(.*)\\.frame:([0-9]+)\\.order$", p);
-
-                if (m neq nil)
-                {
-                    nodeFrames.push_back(int(m[2]));
-                }
+                nodeFrames.push_back(int(m[2]));
             }
+        }
 
+        if (!nodeFrames.empty())
+        {
+            let tprop = "%s.find.frames" % name;
             set(tprop, nodeFrames);
             tempProps.push_back(tprop);
+            
+            // Map local annotated frames of THIS node to global frames
+            for_each (f; mapPropertyToGlobalFrames("find.frames", 1, name))
+            {
+                allFrames.push_back(f);
+            }
         }
     }
 
-    let frames = mapPropertyToGlobalFrames("find.frames", 1, node);
+    // Clean up temporary properties
     for_each (p; tempProps) if (propertyExists(p)) deleteProperty(p);
-    return frames;
+    
+    if (allFrames.empty()) return allFrames;
+    
+    // Sort the frames (simple bubble sort or similar since the number of frames is typically small)
+    for (int i=0; i < allFrames.size(); i++)
+    {
+        for (int j=i+1; j < allFrames.size(); j++)
+        {
+            if (allFrames[j] < allFrames[i])
+            {
+                let temp = allFrames[i];
+                allFrames[i] = allFrames[j];
+                allFrames[j] = temp;
+            }
+        }
+    }
+    
+    int[] uniqueFrames;
+    uniqueFrames.push_back(allFrames.front());
+    for (int i=1; i < allFrames.size(); i++)
+    {
+        if (allFrames[i] != allFrames[i-1]) uniqueFrames.push_back(allFrames[i]);
+    }
+    
+    return uniqueFrames;
 }
 
 
