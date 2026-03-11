@@ -5845,6 +5845,8 @@ namespace IPCore
 
         m_readingGTO = false;
 
+        graph().restoreDisplayPaint();
+
         //
         //  Set session state from container
         //

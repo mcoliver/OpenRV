@@ -3770,4 +3770,41 @@ IPGraph::findNodesByAbstractPath(int frame,
         }
     }
 
+    void IPGraph::restoreDisplayPaint()
+    {
+        for (NodeMap::iterator i = m_nodeMap.begin(); i != m_nodeMap.end(); ++i)
+        {
+            if (i->second->protocol() == "RVPaint")
+            {
+                IPNode* paintInFile = i->second;
+                string name = paintInFile->name();
+
+                // Find if this node matches any of our current display paint nodes
+                for (size_t d = 0; d < m_displayGroups.size(); d++)
+                {
+                    if (PaintIPNode* target = m_displayGroups[d]->paintNode())
+                    {
+                        if (target->name() == name)
+                        {
+                            target->copy(paintInFile);
+                            target->readCompleted(target->protocol(), target->protocolVersion());
+                        }
+                    }
+                }
+
+                if (m_defaultOutputGroup)
+                {
+                    if (PaintIPNode* target = m_defaultOutputGroup->paintNode())
+                    {
+                        if (target->name() == name)
+                        {
+                            target->copy(paintInFile);
+                            target->readCompleted(target->protocol(), target->protocolVersion());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 } // namespace IPCore

@@ -429,6 +429,8 @@ namespace IPCore
         void setPrimaryDisplayGroup(DisplayGroupIPNode*);
         void setPrimaryDisplayGroup(const TwkApp::VideoDevice* device);
 
+        void restoreDisplayPaint();
+
         DisplayGroupIPNode* primaryDisplayGroup() const { return m_displayGroups.empty() ? 0 : m_displayGroups.front(); }
 
         DisplayGroupIPNode* findDisplayGroupByDevice(const TwkApp::VideoDevice*) const;
