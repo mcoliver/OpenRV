@@ -1087,20 +1087,15 @@ frames may appear more than once.
 
                     for_each (p; properties(name))
                     {
-                        let parts = p.split("."),
-                            pname = parts[-1],
-                            pcomp = parts[-2],
-                            cparts = pcomp.split(":");
+                        // Use regex to match the frame:N.order pattern at the end of the property
+                        // this handles node names with dots correctly.
+                        let m = regex.match("(.*)\\.frame:([0-9]+)\\.order$", p);
 
-                        if (cparts[0] == "frame" && 
-                            pname == "order" && 
-                            cparts.size() == 2 &&
-                            propertyInfo(p).size > 0)
+                        if (!m.empty())
                         {
-                            nodeFrames.push_back(int(cparts.back()));
+                            nodeFrames.push_back(int(m[2]));
                         }
                     }
-                
                     set(tprop, nodeFrames);
                     tempProps.push_back(tprop);
                 }

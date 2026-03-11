@@ -2229,14 +2229,11 @@ class: AnnotateMinorMode : MinorMode
             
             for_each (property; properties(node))
             {
-                let parts = property.split(".");
-                let propertyName = parts[2];
-                let propertyComponent = parts[1];
-                let ComponentParts = propertyComponent.split(":");
+                let m = regex.match("(.*)\\.frame:([0-9]+)\\.order$", property);
 
-                if (ComponentParts[0] == "frame" && propertyName == "order" && ComponentParts.size() == 2)
+                if (!m.empty())
                 {
-                    annotatedFrames.push_back(int(ComponentParts[1]));
+                    annotatedFrames.push_back(int(m[2]));
                 }
             }
             
