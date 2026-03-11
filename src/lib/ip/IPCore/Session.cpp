@@ -5983,20 +5983,6 @@ namespace IPCore
             {
                 writeNodes.insert(i->second);
             }
-
-            // Explicitly collect display-level paint nodes since they are members
-            // of the DisplayGroup and not normally saved as top-level nodes.
-            const IPGraph::DisplayGroups& dgroups = graph().displayGroups();
-            for (size_t i = 0; i < dgroups.size(); i++)
-            {
-                if (DisplayGroupIPNode* dg = dgroups[i])
-                {
-                    if (PaintIPNode* p = dg->paintNode())
-                    {
-                        writeNodes.insert(p);
-                    }
-                }
-            }
         }
         else if (recursive)
         {
@@ -6166,6 +6152,31 @@ namespace IPCore
             }
         }
 
+        // Explicitly write display-level paint nodes as objects in the file
+        // but since they aren't in sortedWriteNodes their inputs won't be collected,
+        // preventing circular dependencies.
+        const IPGraph::DisplayGroups& dgroups = graph().displayGroups();
+        for (size_t i = 0; i < dgroups.size(); i++)
+        {
+            if (DisplayGroupIPNode* dg = dgroups[i])
+            {
+                if (PaintIPNode* p = dg->paintNode())
+                {
+                    p->prepareForWrite();
+                    objects.push_back(GTOWriter::Object(p, mungeName(nameReplace, p->name()), p->protocol(), p->protocolVersion()));
+                }
+            }
+        }
+
+        if (m_defaultOutputGroup)
+        {
+            if (PaintIPNode* p = m_defaultOutputGroup->paintNode())
+            {
+                p->prepareForWrite();
+                objects.push_back(GTOWriter::Object(p, mungeName(nameReplace, p->name()), p->protocol(), p->protocolVersion()));
+            }
+        }
+
         Gto::Writer::FileType outType = Gto::Writer::TextGTO;
         if (compressed)
             outType = Gto::Writer::CompressedGTO;
@@ -6196,6 +6207,21 @@ namespace IPCore
             //
             if (!writeSession || n->isWritable())
                 n->writeCompleted();
+        }
+
+        for (size_t i = 0; i < dgroups.size(); i++)
+        {
+            if (DisplayGroupIPNode* dg = dgroups[i])
+            {
+                if (PaintIPNode* p = dg->paintNode())
+                    p->writeCompleted();
+            }
+        }
+
+        if (m_defaultOutputGroup)
+        {
+            if (PaintIPNode* p = m_defaultOutputGroup->paintNode())
+                p->writeCompleted();
         }
 
         for (size_t i = 0; i < tempContainers.size(); i++)
