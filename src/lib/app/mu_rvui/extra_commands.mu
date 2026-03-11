@@ -1067,46 +1067,39 @@ frames may appear more than once.
 \: findAnnotatedFrames (int[]; string node = nil)
 {
     string[] tempProps;
-    let seqb = sequenceBoundaries(node);
-    let testFrames = if seqb.empty() then int[](frameStart()) else seqb;
     if (node eq nil) node = rootNode();
 
-    for_each (f; testFrames)
+    // Directly find all RVPaint nodes in the session
+    for_each (name; nodesOfType("RVPaint"))
     {
-        for_each (info; metaEvaluate(f, node))
+        let tprop = "%s.find.frames" % name;
+
+        if (!propertyExists(tprop))
         {
-            let {name, nodeType, eframe} = info;
+            int[] nodeFrames;
 
-            if (nodeType == "RVPaint")
+            for_each (p; properties(name))
             {
-                let tprop = "%s.find.frames" % name;
+                // Use regex.smatch to get the captured groups (returns string[] or nil)
+                // this handles node names with dots correctly.
+                let m = regex.smatch("(.*)\\.frame:([0-9]+)\\.order$", p);
 
-                if (!propertyExists(tprop))
+                if (m neq nil)
                 {
-                    int[] nodeFrames;
-
-                    for_each (p; properties(name))
-                    {
-                        // Use regex.smatch to get the captured groups (returns string[] or nil)
-                        // this handles node names with dots correctly.
-                        let m = regex.smatch("(.*)\\.frame:([0-9]+)\\.order$", p);
-
-                        if (m neq nil)
-                        {
-                            nodeFrames.push_back(int(m[2]));
-                        }
-                    }
-                    set(tprop, nodeFrames);
-                    tempProps.push_back(tprop);
+                    nodeFrames.push_back(int(m[2]));
                 }
             }
+
+            set(tprop, nodeFrames);
+            tempProps.push_back(tprop);
         }
     }
 
-    let frames = mapPropertyToGlobalFrames("find.frames", 1, rootNode());
+    let frames = mapPropertyToGlobalFrames("find.frames", 1, node);
     for_each (p; tempProps) if (propertyExists(p)) deleteProperty(p);
     return frames;
 }
+
 
 \: _print (void; string s) { print(s); }
 
