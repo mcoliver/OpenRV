@@ -271,7 +271,7 @@ namespace IPCore
     IPNode::ImageRangeInfo SoundTrackIPNode::imageRangeInfo() const
     {
         static thread_local int depth = 0;
-        if (depth > 50)
+        if (depth > 20)
             return ImageRangeInfo();
         depth++;
 
@@ -279,6 +279,12 @@ namespace IPCore
 
         if (!nodes.empty())
         {
+            if (nodes.front() == this)
+            {
+                depth--;
+                return ImageRangeInfo();
+            }
+
             ImageRangeInfo i = nodes.front()->imageRangeInfo();
 
             if (i.inc == 0)
