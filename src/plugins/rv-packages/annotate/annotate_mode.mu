@@ -2231,7 +2231,7 @@ class: AnnotateMinorMode : MinorMode
             {
                 let m = regex.match("(.*)\\.frame:([0-9]+)\\.order$", property);
 
-                if (!m.empty())
+                if (m neq nil)
                 {
                     annotatedFrames.push_back(int(m[2]));
                 }

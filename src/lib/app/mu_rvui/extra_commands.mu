@@ -1091,7 +1091,7 @@ frames may appear more than once.
                         // this handles node names with dots correctly.
                         let m = regex.match("(.*)\\.frame:([0-9]+)\\.order$", p);
 
-                        if (!m.empty())
+                        if (m neq nil)
                         {
                             nodeFrames.push_back(int(m[2]));
                         }
