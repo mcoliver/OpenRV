@@ -2229,7 +2229,7 @@ class: AnnotateMinorMode : MinorMode
             
             for_each (property; properties(node))
             {
-                let m = regex.match("(.*)\\.frame:([0-9]+)\\.order$", property);
+                let m = regex.smatch("(.*)\\.frame:([0-9]+)\\.order$", property);
 
                 if (m neq nil)
                 {

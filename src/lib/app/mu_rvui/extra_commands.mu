@@ -1087,9 +1087,9 @@ frames may appear more than once.
 
                     for_each (p; properties(name))
                     {
-                        // Use regex to match the frame:N.order pattern at the end of the property
+                        // Use regex.smatch to get the captured groups (returns string[] or nil)
                         // this handles node names with dots correctly.
-                        let m = regex.match("(.*)\\.frame:([0-9]+)\\.order$", p);
+                        let m = regex.smatch("(.*)\\.frame:([0-9]+)\\.order$", p);
 
                         if (m neq nil)
                         {
