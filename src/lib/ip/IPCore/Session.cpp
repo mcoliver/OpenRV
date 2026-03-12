@@ -6,6 +6,7 @@
 //
 //
 #include <IPBaseNodes/PaintIPNode.h>
+#include <IPCore/OutputGroupIPNode.h>
 #include <IPCore/Application.h>
 #include <IPCore/AudioRenderer.h>
 #include <IPCore/ImageRenderer.h>
@@ -5845,8 +5846,6 @@ namespace IPCore
 
         m_readingGTO = false;
 
-        graph().restoreDisplayPaint();
-
         //
         //  Set session state from container
         //
@@ -6152,31 +6151,6 @@ namespace IPCore
             }
         }
 
-        // Explicitly write display-level paint nodes as objects in the file
-        // but since they aren't in sortedWriteNodes their inputs won't be collected,
-        // preventing circular dependencies.
-        const IPGraph::DisplayGroups& dgroups = graph().displayGroups();
-        for (size_t i = 0; i < dgroups.size(); i++)
-        {
-            if (DisplayGroupIPNode* dg = dgroups[i])
-            {
-                if (PaintIPNode* p = dg->paintNode())
-                {
-                    p->prepareForWrite();
-                    objects.push_back(GTOWriter::Object(p, mungeName(nameReplace, p->name()), p->protocol(), p->protocolVersion()));
-                }
-            }
-        }
-
-        if (m_defaultOutputGroup)
-        {
-            if (PaintIPNode* p = m_defaultOutputGroup->paintNode())
-            {
-                p->prepareForWrite();
-                objects.push_back(GTOWriter::Object(p, mungeName(nameReplace, p->name()), p->protocol(), p->protocolVersion()));
-            }
-        }
-
         Gto::Writer::FileType outType = Gto::Writer::TextGTO;
         if (compressed)
             outType = Gto::Writer::CompressedGTO;
@@ -6209,22 +6183,8 @@ namespace IPCore
                 n->writeCompleted();
         }
 
-        for (size_t i = 0; i < dgroups.size(); i++)
-        {
-            if (DisplayGroupIPNode* dg = dgroups[i])
-            {
-                if (PaintIPNode* p = dg->paintNode())
-                    p->writeCompleted();
-            }
-        }
-
-        if (m_defaultOutputGroup)
-        {
-            if (PaintIPNode* p = m_defaultOutputGroup->paintNode())
-                p->writeCompleted();
-        }
-
         for (size_t i = 0; i < tempContainers.size(); i++)
+
             delete tempContainers[i];
 
         if (!ok)

@@ -204,6 +204,7 @@ namespace Rv
             if (usingICC)
                 displayDefaults.push_back("ICCDisplayTransform");
             displayDefaults.push_back("RVDisplayColor");
+            displayDefaults.push_back("RVPaint");
             def->declareProperty<StringProperty>("defaults.pipeline", displayDefaults);
             m->addDefinition(def);
         }
