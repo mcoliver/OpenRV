@@ -64,6 +64,7 @@ IF(RV_USE_BREW_DEPS)
       RESULT_VARIABLE _pyside_check_res
       OUTPUT_VARIABLE _pyside_ver
       OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET
     )
 
     IF(_pyside_check_res EQUAL 0)

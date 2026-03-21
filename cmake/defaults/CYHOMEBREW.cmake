@@ -2,7 +2,7 @@
 
 IF(RV_VFX_PLATFORM STREQUAL "CYHOMEBREW")
   SET(RV_VFX_CY_YEAR
-      "2026"
+      "2025"
   ) # Default to recent platform standards
   SET(RV_VFX_CYHOMEBREW
       ON
@@ -15,6 +15,11 @@ IF(RV_VFX_PLATFORM STREQUAL "CYHOMEBREW")
       ON
       CACHE BOOL "Use Homebrew dependencies" FORCE
   )
+
+  # Baseline dependency versions required for build system metadata
+  SET(RV_DEPS_BOOST_VERSION "1.85.0")
+  SET(RV_DEPS_BOOST_MAJOR_MINOR_VERSION "1_85")
+  SET(RV_DEPS_NUMPY_VERSION "1.26.4")
 
   # PySide
   SET(RV_DEPS_PYSIDE_VERSION
