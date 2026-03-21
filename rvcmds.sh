@@ -23,7 +23,7 @@ fi
 
 __rv_select_vfx_platform() {
   # If RV_VFX_PLATFORM is already set to a valid value, use it.
-  if [[ "$RV_VFX_PLATFORM" =~ ^CY202(3|4|5|6)$ ]]; then
+  if [[ "$RV_VFX_PLATFORM" =~ ^(CY202(3|4|5|6)|CYHOMEBREW)$ ]]; then
     echo "RV_VFX_PLATFORM already set to $RV_VFX_PLATFORM."
     return
   fi
@@ -37,7 +37,7 @@ __rv_select_vfx_platform() {
   while [ -z "$RV_VFX_PLATFORM" ]; do
     echo "Please select the VFX Platform year to build for:"
     PS3="Enter a number: "
-    select opt in CY2023 CY2024 CY2025 CY2026; do
+    select opt in CY2023 CY2024 CY2025 CY2026 CYHOMEBREW; do
       if [[ -n "$opt" ]]; then
         export RV_VFX_PLATFORM=$opt
         echo "Using VFX Platform: $RV_VFX_PLATFORM"
@@ -61,7 +61,17 @@ if [[ "$OSTYPE" == "linux"* ]]; then
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   CMAKE_GENERATOR="${CMAKE_GENERATOR:-Ninja}"
   RV_TOOLCHAIN=""
-  export PATH="/opt/homebrew/opt/python@3.11/libexec/bin:$PATH" 
+  if [[ "$RV_VFX_PLATFORM" == "CYHOMEBREW" ]]; then
+    export PATH="/opt/homebrew/opt/python/libexec/bin:$PATH"
+  elif [[ "$RV_VFX_PLATFORM" == "CY2026" ]]; then
+     export PATH="/opt/homebrew/opt/python@3.14/libexec/bin:$PATH"
+  elif [[ "$RV_VFX_PLATFORM" == "CY2025" ]]; then
+     export PATH="/opt/homebrew/opt/python@3.11/libexec/bin:$PATH"
+  elif [[ "$RV_VFX_PLATFORM" == "CY2024" ]]; then
+     export PATH="/opt/homebrew/opt/python@3.11/libexec/bin:$PATH"
+  elif [[ "$RV_VFX_PLATFORM" == "CY2023" ]]; then
+     export PATH="/opt/homebrew/opt/python@3.10/libexec/bin:$PATH"
+  fi 
 
 # Windows
 elif [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* ]]; then
@@ -92,7 +102,14 @@ if [ -z "$QT_HOME" ]; then
       QT_VERSION="5.15"
     fi
   elif [[ "$OSTYPE" == "darwin"* ]]; then
-    if [[ "$RV_VFX_PLATFORM" == "CY2026" ]]; then
+    if [[ "$RV_VFX_PLATFORM" == "CYHOMEBREW" ]]; then
+      # Find local Qt 6.5.3 installation to avoid incompatible Homebrew rolling Qt
+      QT_HOME=$(find ~/Qt*/6.5.3 -maxdepth 4 -type d -path '*/macos' | sort -V | tail -n 1)
+      if [ -z "$QT_HOME" ]; then
+        QT_HOME=$(find ~/Qt*/6.5.3 -maxdepth 4 -type d -path '*/clang_64' | sort -V | tail -n 1)
+      fi
+      QT_VERSION="6.5.3"
+    elif [[ "$RV_VFX_PLATFORM" == "CY2026" ]]; then
       QT_HOME=$(find ~/Qt*/6.8.* -maxdepth 4 -type d -path '*/macos' | sort -V | tail -n 1)
       if [ -z "$QT_HOME" ]; then
         QT_HOME=$(find ~/Qt*/6.8.* -maxdepth 4 -type d -path '*/clang_64' | sort -V | tail -n 1)

@@ -8,7 +8,7 @@ RV_CREATE_STANDARD_DEPS_VARIABLES("RV_DEPS_IMGUI" "${RV_DEPS_IMGUI_VERSION}" "" 
 RV_SHOW_STANDARD_DEPS_VARIABLES()
 
 SET(_imgui_download_url
-    "https://github.com/pthom/imgui/archive/refs/tags/${_version}.zip"
+    "https://github.com/ocornut/imgui/archive/refs/tags/${_version}.zip"
 )
 
 # Hashes for verification (replace with actual hash values)
@@ -46,7 +46,7 @@ ENDIF()
 # Download implot into a separate directory
 EXTERNALPROJECT_ADD(
   implot_download
-  GIT_REPOSITORY "https://github.com/pthom/implot.git"
+  GIT_REPOSITORY "https://github.com/epezent/implot.git"
   GIT_TAG ${RV_DEPS_IMPLOT_TAG}
   DOWNLOAD_DIR ${RV_DEPS_DOWNLOAD_DIR}
   DOWNLOAD_EXTRACT_TIMESTAMP TRUE
@@ -83,7 +83,7 @@ EXTERNALPROJECT_ADD(
 # Download imgui-node-editor into a separate directory Using imgui-node-editor fork from imgui-bundle repository.
 EXTERNALPROJECT_ADD(
   imgui_node_editor_download
-  GIT_REPOSITORY "https://github.com/pthom/imgui-node-editor.git"
+  GIT_REPOSITORY "https://github.com/thedmd/imgui-node-editor.git"
   GIT_TAG ${RV_DEPS_IMGUI_NODE_EDITOR_TAG}
   DOWNLOAD_DIR ${RV_DEPS_DOWNLOAD_DIR}
   DOWNLOAD_EXTRACT_TIMESTAMP TRUE
