@@ -296,8 +296,15 @@ runs:
       shell: bash
 
     - name: Tests
-      run: ctest --test-dir _build -C ${{ inputs.build-type }} --extra-verbose
+      run: ctest --test-dir _build -C ${{ inputs.build-type }} --extra-verbose --output-junit junit.xml
       shell: bash
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-linux-${{ inputs.rocky-version }}-${{ inputs.vfx-platform }}-${{ inputs.build-type }}
+        path: _build/junit.xml
 
     - name: Free some spaces for the install steps
       run: |
@@ -308,3 +315,14 @@ runs:
     - name: Install OpenRV
       run: cmake --install _build --prefix $(pwd)/_install --config ${{ inputs.build-type }}
       shell: bash
+
+    - name: Zip Artifacts
+      run: zip -r openrv-linux-${{ inputs.rocky-version }}-${{ inputs.vfx-platform }}-${{ inputs.build-type }}.zip _install
+      shell: bash
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: openrv-linux-${{ inputs.rocky-version }}-${{ inputs.vfx-platform }}-${{ inputs.build-type }}
+        path: openrv-linux-${{ inputs.rocky-version }}-${{ inputs.vfx-platform }}-${{ inputs.build-type }}.zip
+        retention-days: 7
