@@ -1,0 +1,35 @@
+# Labels for the PR labeler
+Core:
+  - src/lib/ip/**/*
+  - src/lib/app/**/*
+  - src/lib/base/**/*
+
+UI:
+  - src/lib/ui/**/*
+  - src/lib/qt/**/*
+
+Graphics:
+  - src/lib/graphics/**/*
+  - src/lib/image/**/*
+
+Audio:
+  - src/lib/audio/**/*
+
+Documentation:
+  - docs/**/*
+  - README.md
+  - CONTRIBUTING.md
+  - *.md
+
+Build System:
+  - CMakeLists.txt
+  - cmake/**/*
+  - vcpkg.json
+
+CI/CD:
+  - .github/workflows/**/*
+  - .github/actions/**/*
+
+Python:
+  - src/lib/python/**/*
+  - requirements.txt

@@ -25,3 +25,7 @@ jobs:
             ci
             test
             chore
+          requireScope: false
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The subject must start with a lowercase letter to keep consistency.

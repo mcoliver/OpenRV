@@ -66,3 +66,43 @@ jobs:
       qt5_modules: 'debug_info qtcharts qtdatavis3d qtlottie qtnetworkauth qtquick3d qtquicktimeline qtscript qtwebengine qtwebglplugin'
       full_matrix: ${{ github.event_name != 'pull_request' }}
       run_debug: ${{ github.event_name != 'pull_request' || needs.detect-changes.outputs.cmake_changed == 'true' }}
+
+  test-results:
+    if: github.repository_owner == 'AcademySoftwareFoundation' && always()
+    needs: [linux, macos, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+    steps:
+      - name: Download Test Results
+        uses: actions/download-artifact@v4
+        with:
+          path: test-results
+          pattern: test-results-*
+          merge-multiple: true
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: "test-results/**/*.xml"
+
+  coverage:
+    if: github.repository_owner == 'AcademySoftwareFoundation'
+    needs: [linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Coverage Data
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-linux-9-CY2024-Debug # We'll use Linux Debug for coverage
+          path: coverage-data
+
+      # In a real scenario, we'd run a dedicated coverage build.
+      # For now, I'm adding the infrastructure to encourage it.
+      - name: Report Coverage
+        run: |
+          echo "Code coverage reporting infrastructure initialized."
+          # This would typically call a service like Codecov or generate an lcov report
