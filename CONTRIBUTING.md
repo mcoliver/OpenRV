@@ -27,6 +27,36 @@ There are two contribution agreement types, one for individuals contributing ind
 ## Coding Conventions
 
 Please follow the coding conventions and style in each file and in each library when adding new files.
+You can run `pre-commit run --all-files` locally to ensure your changes follow the project's style.
+
+## Testing
+
+We strongly encourage adding unit tests for any new features or bug fixes. Open RV uses `doctest` for C++ unit tests.
+
+### Running Tests Locally
+
+After building the project, you can run the tests using `ctest` from your build directory:
+
+```bash
+cd _build
+ctest -C Release
+```
+
+To run a specific test:
+
+```bash
+ctest -C Release -R Base64Test
+```
+
+### Adding New Tests
+
+New tests should be added to the `src/test` directory. Use existing tests like `src/test/Base64Test` as a template.
+
+#### Dependency Probes
+We use a special category of tests called "Probes" (e.g., `ExrProbe`, `TiffProbe`) to verify the integration with third-party libraries. If you are updating a dependency in `cmake/dependencies`, you **must** ensure the corresponding probe passes. If a probe doesn't exist for the library you are updating, please consider adding one to verify basic read/write or functional capability.
+1. Create a new directory for your test.
+2. Add a `CMakeLists.txt` and your test source files.
+3. Register your test directory in `src/test/CMakeLists.txt`.
 
 ## Git Workflow
 

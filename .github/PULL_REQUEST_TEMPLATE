@@ -4,13 +4,12 @@ When a contributor merges the pull request, the title and the description will b
 
 ### Pull Request TITLE
 
-It should be in the following format:
+It should follow the **Conventional Commits** format:
+`type(scope): summary` (scope is optional but encouraged)
 
-[ 12345: Summary of the changes made ] Where 12345 is the corresponding Github Issue
-
-OR
-
-[ Summary of the changes made ] If it's solving something trivial, like fixing a typo.
+Example:
+`feat(ui): [ 12345 ] Add support for custom themes`
+`fix(core): [ 54321 ] Fix crash when loading corrupted TIFFs`
 -->
 
 ### Linked issues
@@ -24,6 +23,14 @@ Use one line for each Issue. This allows auto-closing the related issue when the
 Fixes #12345
 Fixes #54345
 -->
+
+### Checklist
+
+- [ ] I have read the [CONTRIBUTING.md](CONTRIBUTING.md) document.
+- [ ] I have added unit tests for my changes.
+- [ ] I have verified that all existing tests pass.
+- [ ] My code follows the project's coding style (run `pre-commit run --all-files` locally).
+- [ ] I have updated the documentation (if applicable).
 
 ### Summarize your change.
 
